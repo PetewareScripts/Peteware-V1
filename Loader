@@ -1,9 +1,9 @@
 --[[
 PLEASE READ - IMPORTANT
 
+© 2025 Peteware
 This project is part of Peteware V1, an open-source Roblox script collection.
 
-© 2025 Peteware  
 Licensed under the MIT License.  
 See the full license at:  
 https://github.com/PetewareScripts/Peteware-V1/blob/main/LICENSE
@@ -14,6 +14,8 @@ This software is provided "AS IS" without warranties of any kind.
 Violations of license terms may result in legal action.
 
 Thank you for respecting the license and supporting open source software!
+
+Peteware Development Team
 ]]
 
 --// Start Initialised Stopwatch
