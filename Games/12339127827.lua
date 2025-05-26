@@ -1359,3 +1359,7 @@ else
     
     LocalPlayer:Kick("You are not whitelisted. You have not purchased the script or there is an error with it. Please contact the owner of the script (PouPeuu_V2) for support.")
 end
+
+--[[// Credits
+Infinite Yield: Server Hop and Anti-AFK
+]]
