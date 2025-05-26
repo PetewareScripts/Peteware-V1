@@ -1362,4 +1362,5 @@ end
 
 --[[// Credits
 Infinite Yield: Server Hop and Anti-AFK
+Infinite Yield Discord Server: https://discord.gg/78ZuWSq
 ]]
