@@ -35,6 +35,7 @@ local function CloseDevConsole()
     game:GetService("StarterGui"):SetCore("DevConsoleVisible", false)
 end
 
+--// Supported Checks
 local function UnsupportedGame()
         OpenDevConsole()
         warn("[Peteware-V1]: [3/3] Authentification Failed, Unsupported Game.")
@@ -109,7 +110,7 @@ if isWhitelisted then
             loadstring(game:HttpGet(mainPath..game.PlaceId..".lua", true))()
     end
     
---// Initalised Hook
+--// Authentification Hook
 runService.RenderStepped:Connect(function()
     if _G.Execution and not initialisedFlag then
         initialisedFlag = true
@@ -117,7 +118,7 @@ runService.RenderStepped:Connect(function()
     end
 end)
     
---// Initialise Fail    
+--// Authentification Fail    
 else
     warn("[Peteware-V1]: [3/3] Authentication Failed, You are Blacklisted from using this script.")
     task.wait(1)
@@ -125,8 +126,7 @@ else
     game:GetService("Players").LocalPlayer:Kick(kickContent)
 end    
 
---// Credits
---[[
+--[[// Credits
 @kylosilly: Loader System
 @kylosilly github: https://github.com/kylosilly
 ]]
