@@ -24,8 +24,7 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/PetewareScripts/Petew
 
 1. Execute the script above into your Roblox executor.  
 2. Use the GUI to navigate between features.
-3. Notifications will keep you informed about your actions and status.
-
+3. Enjoy.
 ## License
 
 This project is licensed under the MIT License.
