@@ -1,0 +1,116 @@
+--// Services & Setup
+setclip = setclipboard or (syn and syn.setclipboard) or (Clipboard and Clipboard.set)
+local runService = game:GetService("RunService")
+
+local kickContent = "[Peteware]: Authentication Failed, Please try and reset your HWID."
+local initialisedFlag = false
+local startTime = os.clock()
+
+local function OpenDevConsole()
+    game:GetService("StarterGui"):SetCore("DevConsoleVisible", true)
+end
+
+local function CloseDevConsole()
+    game:GetService("StarterGui"):SetCore("DevConsoleVisible", false)
+end
+
+    --// Supported Games 
+    local validatedIds = {
+        85896571713843, -- BGSI
+        12339127827     -- FE2 Retro Mode
+    }
+
+    local SupportedGame = false
+    for _, id in ipairs(validatedIds) do
+        if id == game.PlaceId then
+            SupportedGame = true
+            break
+        end
+    end
+
+--// Initialiser
+OpenDevConsole()
+print("[Peteware]: [1/3] Starting authentication.")
+
+local hwid = game:GetService("RbxAnalyticsService"):GetClientId()
+local hwidPaste = {
+    hwid,
+    "ABC123-HWID-EXAMPLE",
+    "DEF456-HWID-EXAMPLE",
+    "GHI789-HWID-EXAMPLE"
+}
+
+print("[Peteware]: [2/3] Authentication in progress.")
+
+local isWhitelisted = false
+for i, v in pairs(hwidPaste) do
+    if v == hwid then
+        isWhitelisted = true
+        break
+    end
+end
+
+if isWhitelisted and SupportedGame then
+    print("[Peteware]: [3/3] Whitelisted, Loading Peteware.")
+    print([[ 
+ _______  _______ _________ _______           _______  _______  _______ 
+(  ____ )(  ____ \\__   __/(  ____ \|\     /|(  ___  )(  ____ )(  ____ \
+| (    )|| (    \/   ) (   | (    \/| )   ( || (   ) || (    )|| (    \/
+| (____)|| (__       | |   | (__    | | _ | || (___) || (____)|| (__    
+|  _____)|  __)      | |   |  __)   | |( )| ||  ___  ||     __)|  __)   
+| (      | (         | |   | (      | || || || (   ) || (\ (   | (      
+| )      | (____/\   | |   | (____/\| () () || )   ( || ) \ \__| (____/\
+|/       (_______/   )_(   (_______/(_______)|/     \||/   \__/(_______/
+                                                                        
+    ]])
+
+    function Initialised()
+        local endTime = os.clock()
+        local finalTime = endTime - startTime
+        print(string.format("Initialised in %.4f seconds.", finalTime))
+        task.wait(2)
+        CloseDevConsole()
+    end
+
+    --// Main Loader
+    if SupportedGame then
+        if game.PlaceId == 85896571713843 then
+            loadstring(game:HttpGet("https://pastefy.app/bZJG9fPW/raw", true))()
+        elseif game.PlaceId == 12339127827 then
+            loadstring(game:HttpGet("https://pastefy.app/zqFpDkIu/raw", true))()
+        else
+            OpenDevConsole()
+            warn("[Peteware]: Unsupported Game")
+            print("[Peteware]: Game will be supported soon.")
+        end
+    else
+        OpenDevConsole()
+        warn("[Peteware]: Unsupported Game")
+        warn("[Peteware]: Only Supported Games:")
+        warn("[Peteware]: FE2 Retro Mode")
+        warn("[Peteware]: BGSI")
+        if setclip then
+            print("[Peteware]: Discord link copied to clipboard")
+            setclip("https://discord.gg/4UjSNcPCdh")
+        else
+            warn("[Peteware]: Failed to copy discord invite")
+            warn("[Peteware]: Your executor doesn't support function setclipboard()")
+            warn("[Peteware]: Discord Invite: https://discord.gg/4UjSNcPCdh")
+        end
+    end
+
+--// Initalised Hook
+runService.RenderStepped:Connect(function()
+    if _G.Execution and not InitialisedFlag then
+        initialisedFlag = true
+    end
+    if initialisedFlag then
+        Initialised()
+    end
+end)
+    
+else
+    OpenDevConsole()
+    warn("[Peteware]: [3/3] Authentication Failed, Please try and reset your HWID.")
+    game:GetService("Players").LocalPlayer:Kick(kickContent)
+end    
