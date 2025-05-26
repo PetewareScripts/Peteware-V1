@@ -1,16 +1,21 @@
 --[[
-     Dear Skidders
-I have open sourced this script because I am sick and tired
-of obfusucating scripts and having to update once in a while
-because my obfusucator costs money and I am not going to blow
-my money just to obfusucate a script a bunch of times
-If you are going to skid this atleast include credits in the script
-to me because it isnt fair if your going to steal the script
-then rename everything to your stuff and claim its your script
+PLEASE READ - IMPORTANT
 
-That is all I have to say
+© 2025 Peteware
+This project is part of Peteware V1, an open-source Roblox script collection.
+
+Licensed under the MIT License.  
+See the full license at:  
+https://github.com/PetewareScripts/Peteware-V1/blob/main/LICENSE
+
+**Attribution required:** You must give proper credit to Peteware when using or redistributing this project or its derivatives.
+
+This software is provided "AS IS" without warranties of any kind.  
+Violations of license terms may result in legal action.
+
+Thank you for respecting the license and supporting open source software!
+
 Peteware Development Team
-
 ]]
     
 local startTime = os.clock()
