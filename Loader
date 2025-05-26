@@ -1,10 +1,31 @@
+--[[
+PLEASE READ - IMPORTANT
+
+This project is part of Peteware V1, an open-source Roblox script collection.
+
+© 2025 Peteware  
+Licensed under the MIT License.  
+See the full license at:  
+https://github.com/PetewareScripts/Peteware-V1/blob/main/LICENSE
+
+**Attribution required:** You must give proper credit to Peteware when using or redistributing this project or its derivatives.
+
+This software is provided "AS IS" without warranties of any kind.  
+Violations of license terms may result in legal action.
+
+Thank you for respecting the license and supporting open source software!
+]]
+
+--// Start Initialised Stopwatch
+local startTime = os.clock()
+
 --// Services & Setup
 setclip = setclipboard or (syn and syn.setclipboard) or (Clipboard and Clipboard.set)
 local runService = game:GetService("RunService")
 
-local kickContent = "[Peteware]: Authentication Failed, Please try and reset your HWID."
+local mainPath = "https://raw.githubusercontent.com/PetewareScripts/Peteware-V1/refs/heads/main/Games/"
+local kickContent = "[Peteware-V1]: Authentication Failed, Please try and reset your HWID."
 local initialisedFlag = false
-local startTime = os.clock()
 
 local function OpenDevConsole()
     game:GetService("StarterGui"):SetCore("DevConsoleVisible", true)
@@ -14,44 +35,34 @@ local function CloseDevConsole()
     game:GetService("StarterGui"):SetCore("DevConsoleVisible", false)
 end
 
-    --// Supported Games 
-    local validatedIds = {
-        85896571713843, -- BGSI
-        12339127827     -- FE2 Retro Mode
-    }
-
-    local SupportedGame = false
-    for _, id in ipairs(validatedIds) do
-        if id == game.PlaceId then
-            SupportedGame = true
-            break
+local function UnsupportedGame()
+        OpenDevConsole()
+        warn("[Peteware-V1]: [3/3] Authentification Failed, Unsupported Game.")
+        warn("[Peteware-V1]: [3/3] Please check the Discord to see all supported games.")
+        if setclip then
+            print("[Peteware-V1]: Discord link copied to clipboard.")
+            setclip("https://discord.gg/4UjSNcPCdh")
+        else
+            warn("[Peteware-V1]: Failed to copy discord invite.")
+            warn("[Peteware-V1]: Your executor doesn't support function setclipboard().")
+            warn("[Peteware-V1]: Discord Invite: https://discord.gg/4UjSNcPCdh")
         end
     end
 
---// Initialiser
-OpenDevConsole()
-print("[Peteware]: [1/3] Starting authentication.")
-
-local hwid = game:GetService("RbxAnalyticsService"):GetClientId()
-local hwidPaste = {
-    hwid,
-    "ABC123-HWID-EXAMPLE",
-    "DEF456-HWID-EXAMPLE",
-    "GHI789-HWID-EXAMPLE"
-}
-
-print("[Peteware]: [2/3] Authentication in progress.")
-
-local isWhitelisted = false
-for i, v in pairs(hwidPaste) do
-    if v == hwid then
-        isWhitelisted = true
-        break
+function CheckSupported()
+    local success, result = pcall(function()
+        return game:HttpGet(mainPath..game.PlaceId..".lua")
+    end)
+    if not success or result == "404: Not Found" then
+        UnsupportedGame()
+        return false
     end
+    return true
 end
 
-if isWhitelisted and SupportedGame then
-    print("[Peteware]: [3/3] Whitelisted, Loading Peteware.")
+--// Initialiser
+function Initialised()
+            print("[Peteware-V1]: [3/3] Whitelisted, Loading Peteware.")
     print([[ 
  _______  _______ _________ _______           _______  _______  _______ 
 (  ____ )(  ____ \\__   __/(  ____ \|\     /|(  ___  )(  ____ )(  ____ \
@@ -63,54 +74,59 @@ if isWhitelisted and SupportedGame then
 |/       (_______/   )_(   (_______/(_______)|/     \||/   \__/(_______/
                                                                         
     ]])
-
-    function Initialised()
         local endTime = os.clock()
         local finalTime = endTime - startTime
         print(string.format("Initialised in %.4f seconds.", finalTime))
         task.wait(2)
         CloseDevConsole()
+end
+
+OpenDevConsole()
+print("[Peteware-V1]: [1/3] Starting authentication.")
+
+local hwid = game:GetService("RbxAnalyticsService"):GetClientId()
+local hwidPaste = {
+    hwid,
+    "ABC123-HWID-EXAMPLE",
+    "DEF456-HWID-EXAMPLE",
+    "GHI789-HWID-EXAMPLE"
+}
+
+print("[Peteware-V1]: [2/3] Authentication in progress.")
+
+local isWhitelisted = false
+for i, v in pairs(hwidPaste) do
+    if v == hwid then
+        isWhitelisted = true
+        break
     end
+end
+
+if isWhitelisted then
 
     --// Main Loader
-    if SupportedGame then
-        if game.PlaceId == 85896571713843 then
-            loadstring(game:HttpGet("https://pastefy.app/bZJG9fPW/raw", true))()
-        elseif game.PlaceId == 12339127827 then
-            loadstring(game:HttpGet("https://pastefy.app/zqFpDkIu/raw", true))()
-        else
-            OpenDevConsole()
-            warn("[Peteware]: Unsupported Game")
-            print("[Peteware]: Game will be supported soon.")
-        end
-    else
-        OpenDevConsole()
-        warn("[Peteware]: Unsupported Game")
-        warn("[Peteware]: Only Supported Games:")
-        warn("[Peteware]: FE2 Retro Mode")
-        warn("[Peteware]: BGSI")
-        if setclip then
-            print("[Peteware]: Discord link copied to clipboard")
-            setclip("https://discord.gg/4UjSNcPCdh")
-        else
-            warn("[Peteware]: Failed to copy discord invite")
-            warn("[Peteware]: Your executor doesn't support function setclipboard()")
-            warn("[Peteware]: Discord Invite: https://discord.gg/4UjSNcPCdh")
-        end
+    if CheckSupported() then
+            loadstring(game:HttpGet(mainPath..game.PlaceId..".lua", true))()
     end
-
+    
 --// Initalised Hook
 runService.RenderStepped:Connect(function()
-    if _G.Execution and not InitialisedFlag then
+    if _G.Execution and not initialisedFlag then
         initialisedFlag = true
-    end
-    if initialisedFlag then
         Initialised()
     end
 end)
     
+--// Initialise Fail    
 else
-    OpenDevConsole()
-    warn("[Peteware]: [3/3] Authentication Failed, Please try and reset your HWID.")
+    warn("[Peteware-V1]: [3/3] Authentication Failed, You are Blacklisted from using this script.")
+    task.wait(1)
+    CloseDevConsole()
     game:GetService("Players").LocalPlayer:Kick(kickContent)
 end    
+
+--// Credits
+--[[
+@kylosilly: Loader System
+@kylosilly github: https://github.com/kylosilly
+]]
