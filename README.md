@@ -19,7 +19,7 @@
 ## How to Use
 
 ```lua
-loadstring(game:HttpGet("https://raw.githubusercontent.com/PetewareScripts/Developers-Toolbox-Peteware/refs/heads/main/main.lua",true))()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/PetewareScripts/Peteware-V1/refs/heads/main/Loader",true))()
 ```
 
 1. Execute the script above into your Roblox executor.  
