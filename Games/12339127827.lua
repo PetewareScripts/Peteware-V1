@@ -1073,8 +1073,8 @@ end
 
 runService.RenderStepped:Connect(function()
     if autoLock then
+	task.wait(3)
         replicatedStorage:WaitForChild("Remote"):WaitForChild("BuyDifLock"):FireServer()
-        task.wait(3)
     end
 end)
 
