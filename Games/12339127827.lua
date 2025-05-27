@@ -287,40 +287,6 @@ local function RejoinServer()
     teleportService:TeleportToPlaceInstance(game.placeId, game.jobId)
 end
 
-local function ServerHop()
-    if httprequest then
-        local servers = {}
-        local req = httprequest({Url = string.format("https://games.roblox.com/v1/games/%d/servers/Public?sortOrder=Desc&limit=100&excludeFullGames=true", game.placeId)})
-        local body = httpService:JSONDecode(req.Body)
-
-        if body and body.data then
-            for i, v in next, body.data do
-                if type(v) == "table" and tonumber(v.playing) and tonumber(v.maxplayers) and v.playing < v.maxplayers and v.id ~= game.jobId then
-                    table.insert(servers, 1, v.id)
-                end
-            end
-        end
-
-        if #servers > 0 then
-            teleportService:TeleportToPlaceInstance(game.placeId, servers[math.random(1, #servers)], player)
-        else
-            return Rayfield:Notify({
-                Title = "Peteware",
-                Content = "Serverhop Failed. Couldnt find a available server.",
-                Duration = 3.5,
-                Image = "bell-ring",
-            })
-        end
-    else
-        Rayfield:Notify({
-                Title = "Peteware",
-                Content = "Incompatible Exploit. Your exploit does not support this command (missing request).",
-                Duration = 3,
-                Image = "bell-ring",
-            })
-    end
-end
-
 --// Peteware Overlay (not used)
 local PetewareOverlay = {}
 
@@ -1260,6 +1226,40 @@ task.wait(1)
        RejoinServer()
    end,
 })
+
+local function ServerHop()
+    if httprequest then
+        local servers = {}
+        local req = httprequest({Url = string.format("https://games.roblox.com/v1/games/%d/servers/Public?sortOrder=Desc&limit=100&excludeFullGames=true", game.placeId)})
+        local body = httpService:JSONDecode(req.Body)
+
+        if body and body.data then
+            for i, v in next, body.data do
+                if type(v) == "table" and tonumber(v.playing) and tonumber(v.maxplayers) and v.playing < v.maxplayers and v.id ~= game.jobId then
+                    table.insert(servers, 1, v.id)
+                end
+            end
+        end
+
+        if #servers > 0 then
+            teleportService:TeleportToPlaceInstance(game.placeId, servers[math.random(1, #servers)], player)
+        else
+            return Rayfield:Notify({
+                Title = "Peteware",
+                Content = "Serverhop Failed. Couldnt find a available server.",
+                Duration = 3.5,
+                Image = "bell-ring",
+            })
+        end
+    else
+        Rayfield:Notify({
+                Title = "Peteware",
+                Content = "Incompatible Exploit. Your exploit does not support this command (missing request).",
+                Duration = 3,
+                Image = "bell-ring",
+            })
+    end
+end
 
 local ServerHopButton = Tab:CreateButton({
    Name = "Server Hop",
