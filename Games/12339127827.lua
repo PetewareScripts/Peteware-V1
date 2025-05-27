@@ -79,6 +79,7 @@ player.CharacterAdded:Connect(function()
     SetupCharacter()
 end)
 
+--// Execution Logging
 local deviceUser
 
 if not _G.ExecutionLogged then
@@ -176,6 +177,7 @@ end
     LogExecution()
 end
 
+--// Autofarm Status Logging
 local autofarmStatus = "🟢"
 local autofarmWebhookUrl = "PLEASE_INPUT_YOUR_WEBHOOK_URL"
 local webhookMessageId = nil
@@ -259,6 +261,7 @@ local function AutofarmWebhook()
     end
 end
 
+--// Functions
 local mapHistory = {} 
 isFarming= Value 
 isAir= Value
@@ -318,6 +321,7 @@ local function ServerHop()
     end
 end
 
+--// Peteware Overlay (not used)
 local PetewareOverlay = {}
 
 local PetewareOverlayUI = coreGui:FindFirstChild("PetewareOverlay")
@@ -400,6 +404,7 @@ function PetewareOverlay.Hide()
     end)
 end
 
+--// Main UI
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
 local Window = Rayfield:CreateWindow({
@@ -1054,10 +1059,6 @@ local function StartAutoLock()
    Duration = 3.5,
    Image = "bell-ring",
 })
-    repeat
-	    replicatedStorage:WaitForChild("Remote"):WaitForChild("BuyDifLock"):FireServer()
-	    task.wait(3)
-    until not autoLock
 end
 
 local function StopAutoLock()
@@ -1069,6 +1070,13 @@ local function StopAutoLock()
    Image = "bell-ring",
 })
 end
+
+runService.RenderStepped:Connect(function()
+    if autoLock then
+        replicatedStorage:WaitForChild("Remote"):WaitForChild("BuyDifLock"):FireServer()
+        task.wait(3)
+    end
+end)
 
 local AutoLockToggle = Tab:CreateToggle({
    Name = "Auto Lock to Insane (10 gems)",
@@ -1411,8 +1419,8 @@ local DestroyUIButton = Tab:CreateButton({
     end,
 })
 
+--// Autofarm Webhook Send
 local sendingStatus = false
-
 runService.RenderStepped:Connect(function()
     if webhookStatus and not sendingStatus then
         sendStatus = true
