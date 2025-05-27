@@ -16,19 +16,15 @@ Violations of license terms may result in legal action.
 Thank you for respecting the license and supporting open source software!
 
 Peteware Development Team
-]]
-    
-local startTime = os.clock()
-local endTime = os.clock()
-local finalTime = endTime - startTime
+]] 
 
-startTime = os.clock()
-
+--// Loading Handler
 if not game:IsLoaded() then
 repeat task.wait() until game:IsLoaded()
 task.wait(1)
 end
 
+--// Execution Handler
 if _G.Execution then
     pcall(function()
 game:GetService("StarterGui"):SetCore("DevConsoleVisible", true)
@@ -39,112 +35,63 @@ game:GetService("StarterGui"):SetCore("DevConsoleVisible", true)
         _G.Execution = true
 end
 
-local hwid = game:GetService("RbxAnalyticsService"):GetClientId()
-local hwidPaste = {
-    hwid,
-    "ABC123-HWID-EXAMPLE",
-    "DEF456-HWID-EXAMPLE",
-    "GHI789-HWID-EXAMPLE"
-}
-print("HWID Paste:", hwidPaste)
-print("Client HWID:", hwid)
 
-local StarterGui = game:GetService("StarterGui")
-local function openDevConsole()
-    StarterGui:SetCore("DevConsoleVisible", true)
-end
-openDevConsole()
-
-print("[Peteware]: [1/3] Starting authentication")
-print("[Peteware]: [2/3] Authentication in progress")
-
-local isWhitelisted = false
-for i, v in pairs(hwidPaste) do
-    if v == hwid then
-        isWhitelisted = true
-        break
-    end
-end
-
-if isWhitelisted then
-    print("[Peteware]: [3/3] Whitelisted, Loading Peteware")
-    print([[ 
- _______  _______ _________ _______           _______  _______  _______ 
-(  ____ )(  ____ \\__   __/(  ____ \|\     /|(  ___  )(  ____ )(  ____ \
-| (    )|| (    \/   ) (   | (    \/| )   ( || (   ) || (    )|| (    \/
-| (____)|| (__       | |   | (__    | | _ | || (___) || (____)|| (__    
-|  _____)|  __)      | |   |  __)   | |( )| ||  ___  ||     __)|  __)   
-| (      | (         | |   | (      | || || || (   ) || (\ (   | (      
-| )      | (____/\   | |   | (____/\| () () || )   ( || ) \ \__| (____/\
-|/       (_______/   )_(   (_______/(_______)|/     \||/   \__/(_______/
-                                                                        
-    ]])
-    
-    endTime = os.clock()
-    finalTime = endTime - startTime
-    
-    print(string.format("Intialised in %.4f seconds.", finalTime))
-    
-    task.wait(2)
-
-    local function closeDevConsole()
-        StarterGui:SetCore("DevConsoleVisible", false)
-    end
-    closeDevConsole()
-
+--// Services & Setup
 queueteleport = (syn and syn.queue_on_teleport) or queue_on_teleport or (fluxus and fluxus.queue_on_teleport)
 httprequest = (syn and syn.request) or (http and http.request) or http_request or (fluxus and fluxus.request) or request
 setclip = setclipboard or (syn and syn.setclipboard) or (Clipboard and Clipboard.set)
 
-local Players = game:GetService("Players")
-local Player = Players.LocalPlayer
-local Char = Player.Character or Player.CharacterAdded:Wait()
-local HRP = Char:WaitForChild("HumanoidRootPart")
-local CoreGui = game:GetService("CoreGui")
-local TweenService = game:GetService("TweenService")
-local MarketplaceService = game:GetService("MarketplaceService")
-local TeleportService = game:GetService("TeleportService")
-local HttpService = game:GetService("HttpService") 
+local players = game:GetService("Players")
+local player = players.LocalPlayer
+local coreGui = game:GetService("CoreGui")
+local tweenService = game:GetService("TweenService")
+local teleportService = game:GetService("TeleportService")
+local httpService = game:GetService("HttpService") 
 local uis = game:GetService("UserInputService")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local StarterGui = game:GetService("StarterGui")
-local RunService = game:GetService("RunService")
-local VirtualUser = game:GetService("VirtualUser")
+local replicatedStorage = game:GetService("ReplicatedStorage")
+local starterGui = game:GetService("StarterGui")
+local runService = game:GetService("RunService")
+local virtualUser = game:GetService("VirtualUser")
+local playerGui = player:WaitForChild("PlayerGui")
 
-game:GetService("Players").LocalPlayer.Idled:Connect(function()
-    VirtualUser:CaptureController()
-    VirtualUser:ClickButton2(Vector2.new())
+--// Anti-AFK
+player.Idled:Connect(function()
+    virtualUser:CaptureController()
+    virtualUser:ClickButton2(Vector2.new())
     wait(2)
 end)
 
-local Humanoid
-local function GetHumanoid()
-    local char = Player.Character or Player.CharacterAdded:Wait()
-    return char:WaitForChild("Humanoid")
+--// Character Auto Setup
+local char, humanoid, hrp
+
+local function GetCharacter()
+    return player.Character or player.CharacterAdded:Wait()
 end
 
-local function SetupHumanoid()
-    Humanoid = GetHumanoid()
+local function SetupCharacter()
+    char = GetCharacter()
+    humanoid = char:WaitForChild("Humanoid")
+    hrp = char:WaitForChild("HumanoidRootPart")
 end
 
-SetupHumanoid()
-Player.CharacterAdded:Connect(function()
-    SetupHumanoid()
+SetupCharacter()
+player.CharacterAdded:Connect(function()
+    SetupCharacter()
 end)
 
-local DeviceUser
+local deviceUser
 
 if not _G.ExecutionLogged then
     _G.ExecutionLogged = true
 
     local function LogExecution()
-        local webhookUrl = ""
+        local webhookUrl = "YOUR_DISCORD_WEBHOOK_URL_HERE"
         
         local jobId = game.JobId
         local placeId = game.PlaceId
-        local gameName = MarketplaceService:GetProductInfo(placeId).Name
+        local gameName = game:GetService("MarketplaceService"):GetProductInfo(placeId).Name
         local time = os.date("!*t")
-
+        
 local function isDST(year, month, day)
     local startDST = os.time({year = year, month = 3, day = 31, hour = 1, min = 0, sec = 0})
     while os.date("*t", startDST).wday ~= 1 do
@@ -167,30 +114,31 @@ end
 local formattedTime = string.format("%04d-%02d-%02d %02d:%02d", time.year, time.month, time.day, time.hour, time.min)
 
         if not uis.MouseEnabled and not uis.KeyboardEnabled and uis.TouchEnabled then
-    DeviceUser = "Mobile"
+    deviceUser = "Mobile"
 elseif uis.MouseEnabled and uis.KeyboardEnabled and not uis.TouchEnabled then
-    DeviceUser = "PC"
+    deviceUser = "PC"
     else
-    DeviceUser = "Unknown"
+    deviceUser = "Unknown"
 end
 
-local ExecutorUsed = identifyexecutor()
+local executorUsed = identifyexecutor()
 
 local deviceEmoji = "[💻]" 
-if DeviceUser == "Mobile" then
+if deviceUser == "Mobile" then
     deviceEmoji = "[📱]"
-elseif DeviceUser == "Unknown" then
+elseif deviceUser == "Unknown" then
     deviceEmoji = "[❓]"
 end
 
         local githubBase = "https://petewarescripts.github.io/Roblox-Joiner/"
         local githubJoinLink = string.format("%s/?placeId=%d&jobId=%s", githubBase, placeId, jobId)
-        local playerProfileLink = string.format("https://www.roblox.com/users/%d/profile", Player.UserId)
+        local playerProfileLink = string.format("https://www.roblox.com/users/%d/profile", player.UserId)
         local joinScript = string.format('game:GetService("TeleportService"):TeleportToPlaceInstance(%d, "%s")', placeId, jobId)
         local usedScript = "FE2 Retro Peteware v1.1.0"
 
-        local jsonData = HttpService:JSONEncode({
-            content = "",
+        local jsonData = httpService:JSONEncode({
+            username = "Petah Assistant",
+            avatar_url = "https://media.discordapp.net/attachments/1276618605215219722/1370544872993329162/stewie-gun.gif?ex=681fe2e1&is=681e9161&hm=257497f332ffab8ba50af15641d62fc2647ef1fa01a3fd166dbfe0f5886d2dbf&=",
             embeds = {{
                 title = "Execution Log",
                 color = 16740099,
@@ -198,16 +146,17 @@ end
                     url = string.format("https://media.discordapp.net/attachments/1276618605215219722/1370449278857641994/peteware.png?ex=68203299&is=681ee119&hm=b3b9e1caf3824fd08598ede191cea7c2b5a45788d25aa8b389a5f8e51053fcba&=&format=webp&quality=lossless&width=537&height=602")
                 },
                 fields = {
-                    {name = "**Script Ran:**", value = usedScript},
-                    {name = "**[👤] Username:**", value = Player.Name},
-                    {name = "**[👤] Display Name:**", value = Player.DisplayName},
-                    {name = "**[🪪] UserID:**", value = tostring(Player.UserId)},
-                    {name = "**[📷] Profile:**", value = string.format("[Click here to view profile](%s)", playerProfileLink)},
-                    {name = "**[🌎] Game Name:**", value = string.format("[**%s**](https://www.roblox.com/games/%d)", gameName, placeId)},
-                    {name = "**[:link:] Join Server (URL):**", value = string.format("[Click here to join](%s)", githubJoinLink)},
-                    {name = "**[:file_folder:] Join Server (Script):**", value = string.format("```lua\n%s```", joinScript)},
-                    {name = "**[🧠] Device Info:**", value = string.format("%s Device: %s\n[🛠️] Executor: %s", deviceEmoji, DeviceUser, ExecutorUsed)},
-                    {name = "**[🕒] Timestamp**", value = formattedTime}
+                    {name = "**Script Ran:**", value = usedScript, inline = false},
+                    {name = "**[👤] Username:**", value = player.Name, inline = false},
+                    {name = "**[👤] Display Name:**", value = player.DisplayName, inline = true},
+                    {name = "**[🪪] UserID:**", value = tostring(player.UserId), inline = true},
+                    {name = "**[📷] Profile:**", value = string.format("[Click here to view profile](%s)", playerProfileLink), inline = true},
+                    {name = "**[🌎] Game Name:**", value = string.format("[**%s**](https://www.roblox.com/games/%d)", gameName, placeId), inline = false},
+                    {name = "**[:link:] Join Server (URL):**", value = string.format("[Click here to join](%s)", githubJoinLink), inline = true},
+                    {name = "**[:file_folder:] Join Server (Script):**", value = string.format("```lua\n%s```", joinScript), inline = true},
+                    {name = "**[🧠] Device Info:**", value = string.format("%s Device: %s\n[🛠️] Executor: %s", deviceEmoji, deviceUser, executorUsed), inline = false},
+                    {name = "**[🌟] Credits**", value = "**Peteware -** https://discord.gg/4UjSNcPCdh", inline = false},
+                    {name = "**[🕒] Timestamp**", value = formattedTime, inline = true}
                 }
             }}
         })
@@ -227,15 +176,98 @@ end
     LogExecution()
 end
 
+local autofarmStatus = "🟢"
+local autofarmWebhookUrl = "PLEASE_INPUT_YOUR_WEBHOOK_URL"
+local webhookMessageId = nil
+
+local function AutofarmWebhook()
+    local level = playerGui.GameGui.HUD.MenuToggle.Stats.XPStats.Icon.Info.Text
+    local xpProgress = playerGui.GameGui.HUD.MenuToggle.Stats.XPStats.XP.Text
+    local gems = playerGui.GameGui.HUD.MenuToggle.Stats.GemAmt.Amount.Text
+    local coins = playerGui.GameGui.HUD.MenuToggle.Stats.CoinAmt.Amount.Text
+
+    local FE2Gem = "<:FE2Gem:1376690948939186216>"
+    local FE2Coin = "<:FE2Coin:1376690888910176256>"
+
+    local headshotUrl = "https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds="..player.UserId.."&size=150x150&format=Png&isCircular=true"
+    local success, result = pcall(function()
+        return httpService:JSONDecode(game:HttpGet(headshotUrl))
+    end)
+    if not (success and result and result.data and #result.data > 0) then return end
+    local avatarHeadshot = result.data[1].imageUrl
+
+    local time = os.date("!*t")
+    local function isDST(year, month, day)
+        local function lastSunday(month)
+            local d = os.time({year = year, month = month, day = 31})
+            while os.date("*t", d).wday ~= 1 do
+                d = d - 86400
+            end
+            return d
+        end
+        local current = os.time({year = year, month = month, day = day})
+        return current >= lastSunday(3) and current < lastSunday(10)
+    end
+    if isDST(time.year, time.month, time.day) then
+        time.hour = time.hour + 1
+    end
+    local formattedTime = string.format("%04d-%02d-%02d %02d:%02d", time.year, time.month, time.day, time.hour, time.min)
+
+    local jsonData = {
+        username = "Petah Assistant",
+        avatar_url = "https://media.discordapp.net/attachments/1276618605215219722/1370544872993329162/stewie-gun.gif?ex=681fe2e1&is=681e9161&hm=257497f332ffab8ba50af15641d62fc2647ef1fa01a3fd166dbfe0f5886d2dbf&=",
+        embeds = {{
+            title = "FE2 Retro Autofarm",
+            color = 16740099,
+            thumbnail = { url = avatarHeadshot },
+            fields = {
+                {name = "**Statistics**", value = "Player: **" .. player.DisplayName .. "**\nLevel: **" .. level .. "** | " .. xpProgress .. "\n" .. FE2Gem .. " **" .. gems .. "**\n" .. FE2Coin .. " **" .. coins .. "**", inline = false},
+                {name = "**Status:** "..autofarmStatus, value = "", inline = false},
+                {name = "**[🌟] Credits**", value = "**Peteware -** https://discord.gg/4UjSNcPCdh", inline = true},
+                {name = "**[🕒] Timestamp**", value = formattedTime, inline = false}
+            }
+        }}
+    }
+
+    local body = httpService:JSONEncode(jsonData)
+
+    if not autofarmWebhookUrl or autofarmWebhookUrl == "PLEASE_INPUT_YOUR_WEBHOOK_URL" then return end
+
+    if httprequest then
+        pcall(function()
+            if not webhookMessageId then
+                local response = httprequest({
+                    Url = autofarmWebhookUrl,
+                    Method = "POST",
+                    Headers = {["Content-Type"] = "application/json"},
+                    Body = body
+                })
+                if response and response.Body then
+                    local decoded = httpService:JSONDecode(response.Body)
+                    webhookMessageId = decoded.id
+                end
+            else
+                local updateUrl = autofarmWebhookUrl .. "/messages/" .. webhookMessageId
+                httprequest({
+                    Url = updateUrl,
+                    Method = "PATCH",
+                    Headers = {["Content-Type"] = "application/json"},
+                    Body = body
+                })
+            end
+        end)
+    end
+end
+
 local mapHistory = {} 
 isFarming= Value 
 isAir= Value
 local lastMapName = nil 
 
-local function getMapName()
-    local MapSettings = game.Workspace.Multiplayer:FindFirstChild("Map") and game.Workspace.Multiplayer.Map:FindFirstChild("Settings")
-    if MapSettings then
-        local mapNameObj = MapSettings:FindFirstChild("MapName")
+local function GetMapName()
+    local mapSettings = game.Workspace.Multiplayer:FindFirstChild("Map") and game.Workspace.Multiplayer.Map:FindFirstChild("Settings")
+    if mapSettings then
+        local mapNameObj = mapSettings:FindFirstChild("MapName")
         if mapNameObj and mapNameObj:IsA("StringValue") then
             local currentMapName = mapNameObj.Value
             if currentMapName ~= lastMapName then
@@ -248,26 +280,26 @@ local function getMapName()
     return nil 
 end
 
-local function rejoinServer()
-    TeleportService:TeleportToPlaceInstance(game.placeId, game.jobId)
+local function RejoinServer()
+    teleportService:TeleportToPlaceInstance(game.placeId, game.jobId)
 end
 
-local function serverHop()
+local function ServerHop()
     if httprequest then
         local servers = {}
         local req = httprequest({Url = string.format("https://games.roblox.com/v1/games/%d/servers/Public?sortOrder=Desc&limit=100&excludeFullGames=true", game.placeId)})
-        local body = HttpService:JSONDecode(req.Body)
+        local body = httpService:JSONDecode(req.Body)
 
         if body and body.data then
             for i, v in next, body.data do
-                if type(v) == "table" and tonumber(v.playing) and tonumber(v.maxPlayers) and v.playing < v.maxPlayers and v.id ~= game.jobId then
+                if type(v) == "table" and tonumber(v.playing) and tonumber(v.maxplayers) and v.playing < v.maxplayers and v.id ~= game.jobId then
                     table.insert(servers, 1, v.id)
                 end
             end
         end
 
         if #servers > 0 then
-            TeleportService:TeleportToPlaceInstance(game.placeId, servers[math.random(1, #servers)], Player)
+            teleportService:TeleportToPlaceInstance(game.placeId, servers[math.random(1, #servers)], player)
         else
             return Rayfield:Notify({
                 Title = "Peteware",
@@ -288,7 +320,7 @@ end
 
 local PetewareOverlay = {}
 
-local PetewareOverlayUI = CoreGui:FindFirstChild("PetewareOverlay")
+local PetewareOverlayUI = coreGui:FindFirstChild("PetewareOverlay")
 
 if PetewareOverlayUI then
     PetewareOverlayUI:Destroy()
@@ -300,7 +332,7 @@ screenGui.ResetOnSpawn = false
 screenGui.Enabled = false
 screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 screenGui.IgnoreGuiInset = true
-screenGui.Parent = CoreGui
+screenGui.Parent = coreGui
 
 local overlay = Instance.new("Frame")
 overlay.Size = UDim2.new(1, 0, 1, 0)
@@ -337,29 +369,29 @@ label.Parent = overlay
 function PetewareOverlay.Show()
     screenGui.Enabled = true
 
-    TweenService:Create(overlay, TweenInfo.new(1, Enum.EasingStyle.Sine), {
+    tweenService:Create(overlay, TweenInfo.new(1, Enum.EasingStyle.Sine), {
         BackgroundTransparency = 0
     }):Play()
 
-    TweenService:Create(label, TweenInfo.new(1, Enum.EasingStyle.Sine), {
+    tweenService:Create(label, TweenInfo.new(1, Enum.EasingStyle.Sine), {
         TextTransparency = 0
     }):Play()
 
 local rotationSpeed = 20 
 local currentRotation = 0
 
-RunService.RenderStepped:Connect(function(deltaTime)
+runService.RenderStepped:Connect(function(deltaTime)
 	currentRotation = (currentRotation + rotationSpeed * deltaTime) % 360
 	icon.Rotation = currentRotation
 end)
 end
 
 function PetewareOverlay.Hide()
-    TweenService:Create(overlay, TweenInfo.new(0.5, Enum.EasingStyle.Sine), {
+    tweenService:Create(overlay, TweenInfo.new(0.5, Enum.EasingStyle.Sine), {
         BackgroundTransparency = 1
     }):Play()
 
-    TweenService:Create(label, TweenInfo.new(0.5, Enum.EasingStyle.Sine), {
+    tweenService:Create(label, TweenInfo.new(0.5, Enum.EasingStyle.Sine), {
         TextTransparency = 1
     }):Play()
 
@@ -368,48 +400,10 @@ function PetewareOverlay.Hide()
     end)
 end
 
-local PetewarePlatform = workspace:FindFirstChild("PetewarePlatform")
-
-if PetewarePlatform then
-    PetewarePlatform:Destroy()
-end
-
-local platformPart = Instance.new("Part")
-platformPart.Name = "PetewarePlatform"
-platformPart.Anchored = true
-platformPart.Size = Vector3.new(20, 1, 20)
-platformPart.Position = Vector3.new(-327, 20, 191)
-platformPart.Material = Enum.Material.Neon
-platformPart.Transparency = 1
-platformPart.CanCollide = false
-platformPart.Color = Color3.fromRGB(230, 90, 10)
-platformPart.TopSurface = Enum.SurfaceType.Smooth
-platformPart.BottomSurface = Enum.SurfaceType.Smooth
-
-local decal = Instance.new("Decal")
-decal.Texture = "rbxassetid://126732855832692"
-decal.Face = Enum.NormalId.Top
-decal.Transparency = 1
-decal.Parent = platformPart
-
-platformPart.Parent = workspace
-
-local function PetewarePlatformShow()
-platformPart.Transparency = 0
-platformPart.CanCollide = true
-decal.Transparency = 0
-end
-
-local function PetewarePlatformHide()
-platformPart.Transparency = 1
-platformPart.CanCollide = false
-decal.Transparency = 1
-end
-
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
 local Window = Rayfield:CreateWindow({
-   Name = "FE2 Retro Peteware v1.1.0",
+   Name = "FE2 Retro Peteware v1.2.0",
    Icon = 0, 
    LoadingTitle = "FE2 Retro | Peteware",
    LoadingSubtitle = "Developed by Peteware",
@@ -509,9 +503,8 @@ local Section = Tab:CreateSection("Welcome!")
 ]]
 
 local Paragraph = Tab:CreateParagraph({Title = "What's new and improved", Content = [[
-    [+] Infinite Oxygen
-    Please consider joining the server and suggesting more features.
-    Please report any bugs to our discord server by creating a ticket.]]})
+    [+] Autofarm Status (webhook)
+    This script has now been discontinued.]]})
 
 local Button = Tab:CreateButton({
    Name = "Join Discord",
@@ -559,77 +552,81 @@ local AutofarmXPToggle = Tab:CreateToggle({
         local processedMap = false
         local elevatorPosition = Vector3.new(-26, -144, 74)
 
-        local function teleportToElevator(waitTime)
+        local function TeleportToElevator(waitTime)
             task.wait(waitTime or 1.5)
-            local Character = Player.Character or Player.CharacterAdded:Wait()
-            local HRP = Character:WaitForChild("HumanoidRootPart", 5)
-            if HRP then
-                HRP.CFrame = CFrame.new(elevatorPosition)
+            if hrp then
+                hrp.CFrame = CFrame.new(elevatorPosition)
             end
         end
 
-        local function autofarm()
-            while isFarming do
-                local Character = Player.Character or Player.CharacterAdded:Wait()
-                local HRP = Character:WaitForChild("HumanoidRootPart", 5)
-                if not HRP then return end
+        local function LevelAutofarm()
+    while isFarming do
+        if not hrp then
+            return
+        end
 
-                local distance = (HRP.Position - elevatorPosition).Magnitude
-                if distance <= 500 then
-                    teleportToElevator(1)
-                    repeat
-                        task.wait(1)
-                        Character = Player.Character or Player.CharacterAdded:Wait()
-                        HRP = Character:FindFirstChild("HumanoidRootPart")
-                        if HRP then
-                            distance = (HRP.Position - elevatorPosition).Magnitude
-                        end
-                    until distance > 500 or not isFarming
-                    task.wait(0.5)
-                    continue
+        local distance = (hrp.Position - elevatorPosition).Magnitude
+        if distance <= 500 then
+            TeleportToElevator(1)
+            repeat
+                task.wait(1)
+                if hrp then
+                    distance = (hrp.Position - elevatorPosition).Magnitude
+                end
+            until distance > 500 or not isFarming
+            task.wait(0.5)
+        else
+            local map = game.Workspace.Multiplayer:FindFirstChild("Map")
+            if map then
+                local actualMapName = GetMapName() or map.Name
+
+                if map ~= lastMapInstance or actualMapName ~= currentMapName then
+                    lastMapInstance = map
+                    currentMapName = actualMapName
+                    processedMap = false
+                    print("[Autofarm]: New Map: " .. actualMapName)
+                    task.wait(1)
                 end
 
-                local map = game.Workspace.Multiplayer:FindFirstChild("Map")
-                if map then
-                    local actualMapName = getMapName() or map.Name
+                if not processedMap then
+                    processedMap = true
+                    print("[Autofarm]: Processing: " .. actualMapName)
 
-                    if map ~= lastMapInstance or actualMapName ~= currentMapName then
-                        lastMapInstance = map
-                        currentMapName = actualMapName
-                        processedMap = false
-                        print("[Autofarm]: New Map: " .. actualMapName)
-                        task.wait(1)
-                    end
+                    buttons(0.05)
 
-                    if not processedMap then
-                        processedMap = true
-                        print("[Autofarm]: Processing: " .. actualMapName)
-
-                        buttons(0.05)
-
-                        if mapName == "Sinking Ship" then
-    local Map = game.Workspace.Multiplayer:FindFirstChild("Map") and game.Workspace.Multiplayer.Map:FindFirstChild("Section2")
-    local ExitV2 = Map and Map:FindFirstChild("ExitRegion")
-    if ExitV2 then
-        targetCFrame = ExitV2.CFrame
-    else
-        warn("[TpExit]: Couldnt locate ExitRegion.")
-    end
+                    if mapName == "Sinking Ship" then
+                        local map = game.Workspace.Multiplayer:FindFirstChild("Map") and game.Workspace.Multiplayer.Map:FindFirstChild("Section2")
+                        local exitV2 = map and map:FindFirstChild("ExitRegion")
+                        if exitV2 then
+                            targetCFrame = exitV2.CFrame
                         else
-                            local spawnObj = map:FindFirstChild("Spawn")
-                            if spawnObj and spawnObj.Position.X < 3000 then
-                                Tpexit(1)
-                            else
-                                Tpexit(2)
-                            end
+                            Rayfield:Notify({
+                                Title = "Peteware",
+                                Content = "Couldnt locate Exit Region.",
+                                Duration = "1.5",
+                                Image = "bell-ring",
+                            })
                         end
-
-                        print("[Autofarm]: Processed Map: " .. actualMapName)
+                    else
+                        local spawnObj = map:FindFirstChild("Spawn")
+                        if spawnObj and spawnObj.Position.X < 3000 then
+                            Tpexit(1)
+                        else
+                            Tpexit(2)
+                        end
                     end
+                    Rayfield:Notify({
+                        Title = "Peteware",
+                        Content = "[Autofarm]: Processed Map: " .. actualMapName,
+                        Duration = 2.5,
+                        Image = "bell-ring",
+                    })
                 end
-                task.wait(0.5)
             end
+            task.wait(0.5)
         end
+    end
+end
 
         if Value then
             isFarming = true
@@ -640,24 +637,23 @@ local AutofarmXPToggle = Tab:CreateToggle({
             end
 
             local function onCharacterAdded(character)
-                local Humanoid = character:WaitForChild("Humanoid", 5)
-                if Humanoid then
-                    Humanoid.Died:Connect(function()
+                if humanoid then
+                    humanoid.Died:Connect(function()
                         task.wait(1.5)
                         if isFarming then
-                            teleportToElevator()
+                            TeleportToElevator()
                         end
                     end)
                 end
             end
 
-            connection = Player.CharacterAdded:Connect(onCharacterAdded)
+            connection = player.CharacterAdded:Connect(onCharacterAdded)
 
-            if Player.Character then
-                onCharacterAdded(Player.Character)
+            if char then
+                onCharacterAdded(char)
             end
 
-            spawn(autofarm)
+            task.spawn(LevelAutofarm)
         else
             isFarming = false
             if connection then
@@ -674,20 +670,62 @@ local AutofarmXPToggle = Tab:CreateToggle({
     end,
 })
 
+local Input = Tab:CreateInput({
+   Name = "Webhook Url",
+   CurrentValue = "",
+   PlaceholderText = "Input Your URL",
+   RemoveTextAfterFocusLost = false,
+   Flag = "WebhookUrl",
+   Callback = function(Text)
+       autofarmWebhookUrl = Text
+       Rayfield:Notify({
+   Title = "Peteware",
+   Content = "Set Webhook Url: " .. autofarmWebhookUrl,
+   Duration = 3.5,
+   Image = "bell-ring",
+})
+   end,
+})
+
+local webhookStatus = false
+
+local AutofarmWebhookToggle = Tab:CreateToggle({
+   Name = "Send Status Webhook",
+   CurrentValue = false,
+   Flag = "SendStatusWebhookToggle", 
+   Callback = function(Value)
+       webhookStatus = Value
+       if Value then
+           Rayfield:Notify({
+   Title = "Peteware",
+   Content = "Sending Statistics to Webhook: " .. autofarmWebhookUrl,
+   Duration = 3.5,
+   Image = "bell-ring",
+})
+       else
+           Rayfield:Notify({
+   Title = "Peteware",
+   Content = "Stopped Sending Statistics to Webhook.",
+   Duration = 1.5,
+   Image = "bell-ring",
+})
+       end
+   end,
+})
+
 local Section = Tab:CreateSection("In-Game")
 
 local InfiniteAirToggle = Tab:CreateToggle({
    Name = "InfO²",
    CurrentValue = false,
-   Flag = "Toggle1", 
+   Flag = "InfiniteAirToggle", 
    Callback = function(Value)
        isAir = Value
         local running = isAir
         local lastMapState = nil
         local lastRadiusState = nil
         local lastSetValue = nil
-        local character = Player.Character or Player.CharacterAdded:Wait()
-        local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+        local character = player.Character or player.CharacterAdded:Wait()
         local elevatorPosition = Vector3.new(-26, -144, 74)
         local loading = "loading"
         local waiting = "waiting"
@@ -697,7 +735,7 @@ local InfiniteAirToggle = Tab:CreateToggle({
         local function setValue(newValue)
             if lastSetValue ~= newValue then
                 local aux = loadstring(game:HttpGetAsync("https://pastebin.com/raw/KnbcZji1"))()
-                local scriptPath = game:GetService("Players").LocalPlayer.PlayerScripts.CL_MAIN_GameScript
+                local scriptPath = player.PlayerScripts.CL_MAIN_GameScript
                 local closureName = "Unnamed function"
                 local upvalueIndex = 13
                 local closureConstants = {
@@ -715,40 +753,22 @@ local InfiniteAirToggle = Tab:CreateToggle({
         end
 
         local function setupCharacter(newCharacter)
-
-    character = newCharacter
-
-    humanoidRootPart = character:WaitForChild("HumanoidRootPart")
-
-    setValue(nil) 
-
+            char = newCharacter
+    setValue(nil)
     if deathConnection then deathConnection:Disconnect() end
-
-    local humanoid = character:FindFirstChildOfClass("Humanoid")
-
     if humanoid then
-
         deathConnection = humanoid.Died:Connect(function()
-
             if loopThread then
-
                 running = false
-
                 task.wait(0.5)
-
-                setValue(loading) 
-
+                setValue(loading)
             end
-
         end)
-
     end
-
 end
-
+       
         if characterConnection then characterConnection:Disconnect() end
-        characterConnection = Player.CharacterAdded:Connect(setupCharacter)
-
+        characterConnection = player.CharacterAdded:Connect(setupCharacter)
         setupCharacter(character)
 
         if isAir then
@@ -765,8 +785,8 @@ end
                     local currentMapState, currentRadiusState
                     if map then
                         currentMapState = "mapPresent"
-                        if humanoidRootPart then
-                            local distance = (humanoidRootPart.Position - elevatorPosition).Magnitude
+                        if hrp then
+                            local distance = (hrp.Position - elevatorPosition).Magnitude
                             if distance <= 500 then
                                 currentRadiusState = "inRadius"
                             else
@@ -800,8 +820,8 @@ end
    Duration = 3.5,
    Image = "bell-ring",
 })
-            if humanoidRootPart then
-                local distance = (humanoidRootPart.Position - elevatorPosition).Magnitude
+            if hrp then
+                local distance = (hrp.Position - elevatorPosition).Magnitude
                 if distance <= 500 then
                     setValue(waiting)
                 else
@@ -814,10 +834,10 @@ end
 })
 
 function buttons(waittime)
-    local Map = game.Workspace.Multiplayer.Map
+    local map = game.Workspace.Multiplayer.Map
     local Btns = {}
     local Desc = {}
-    for i, v in pairs(Map:GetDescendants()) do
+    for i, v in pairs(map:GetDescendants()) do
         Desc[v.Name .. "Obj"] = v
     end
     for i = 0, 30 do
@@ -827,7 +847,7 @@ function buttons(waittime)
     end
     for _, v in pairs(Btns) do
         local Hitbox = v.Hitbox
-        Player.Character.HumanoidRootPart.CFrame = Hitbox.CFrame
+        player.Character.HumanoidRootPart.CFrame = Hitbox.CFrame
         task.wait(waittime)
     end
 end
@@ -836,14 +856,23 @@ local TPButtonsButton = Tab:CreateButton({
    Name = "Press Buttons",
    Callback = function()
        local elevatorPosition = Vector3.new(-26, -144, 74)
-        local distance = (HRP.Position - elevatorPosition).Magnitude
+        local distance = (hrp.Position - elevatorPosition).Magnitude
 
         if distance > 500 then
-            print("[ButtonTp]: All Buttons Pressed.")
             buttons(0.05)
+            Rayfield:Notify({
+                Title = "Peteware",
+                Content = "Teleported to buttons.",
+                Duration = 1.5,
+                Image = "bell-ring",
+            })
         else
-            warn("[ButtonTp]: Failed to press Buttons.")
-            warn("[ButtonTp]: Player hasn't loaded into the map.")
+            Rayfield:Notify({
+                Title = "Peteware",
+                Content = "Failed to teleport to buttons, Cannot teleport in lobby.",
+                Duration = "1.5",
+                Image = "bell-ring",
+            })
             openDevConsole()
             task.wait(2.5)
             closeDevConsole()
@@ -853,50 +882,61 @@ local TPButtonsButton = Tab:CreateButton({
 
 function Tpexit(pos)
     spawn(function()
-        local Character = Player.Character or Player.CharacterAdded:Wait()
-        local HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
-
-        if not HumanoidRootPart then
-            warn("[TpExit]: Couldnt find HumanoidRootPart")
+        if not hrp then
+            Rayfield:Notify({
+                Title = "Peteware",
+                Content = "HumanoidRootPart wasnt available.",
+                Duration = 1.5,
+                Image = "bell-ring",
+            })
             return
         end
 
-        local mapName = getMapName()
+        local mapName = GetMapName()
         local targetCFrame
 
         if mapName == "Sinking Ship" then
-    local Map = game.Workspace.Multiplayer:FindFirstChild("Map") and game.Workspace.Multiplayer.Map:FindFirstChild("Section2")
-    local ExitV2 = Map and Map:FindFirstChild("ExitRegion")
-    if ExitV2 then
-        targetCFrame = ExitV2.CFrame
+    local map = game.Workspace.Multiplayer:FindFirstChild("Map") and game.Workspace.Multiplayer.Map:FindFirstChild("Section2")
+    local exitV2 = map and map:FindFirstChild("ExitRegion")
+    if exitV2 then
+        targetCFrame = exitV2.CFrame
     else
-        warn("[TpExit]: Couldnt locate ExitRegion.")
+        Rayfield:Notify({
+   Title = "Peteware",
+   Content = "Couldnt locate Exit Region.",
+   Duration = 1.5,
+   Image = "bell-ring",
+})
     end
 else
-            local Map = game.Workspace.Multiplayer:FindFirstChild("Map")
-            local ExitBlock = Map and Map:FindFirstChild("ExitRegion")
+            local map = game.Workspace.Multiplayer:FindFirstChild("Map")
+            local exitBlock = map and map:FindFirstChild("ExitRegion")
             
-            if ExitBlock then
-                targetCFrame = ExitBlock.CFrame
+            if exitBlock then
+                targetCFrame = exitBlock.CFrame
             else
                 if pos == 1 then
                     targetCFrame = CFrame.new(2080, 990, 2)
                 elseif pos == 2 then
                     targetCFrame = CFrame.new(4080, 990, 2)
                 else
-                    warn("[TpExit]: Couldnt locate ExitRegion.")
+                    Rayfield:Notify({
+   Title = "Peteware",
+   Content = "Couldnt locate Exit Region.",
+   Duration = 1.5,
+   Image = "bell-ring",
+})
                     return
                 end
             end
         end
         
-        local Ts = game:GetService("TweenService")
-        local Ti = TweenInfo.new(1, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
-        local Tp = { CFrame = targetCFrame }
+        local tweenInfo = TweenInfo.new(1, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
+        local pos = { CFrame = targetCFrame }
 
-        local Tw = Ts:Create(HumanoidRootPart, Ti, Tp)
-        Tw:Play()
-        Tw.Completed:Wait()
+        local tpTween = tweenService:Create(hrp, tweenInfo, pos)
+        tpTween:Play()
+        tpTween.Completed:Wait()
     end)
 end
 
@@ -905,14 +945,17 @@ local TPExitButton = Tab:CreateButton({
    Callback = function()
        local elevatorPosition = Vector3.new(-26, -144, 74)
         local radius = 500
-        local character = Player.Character or Player.CharacterAdded:Wait()
-        local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
 
-        if humanoidRootPart then
-            local distance = (humanoidRootPart.Position - elevatorPosition).Magnitude
+        if hrp then
+            local distance = (hrp.Position - elevatorPosition).Magnitude
 
             if distance > radius then
-                print("[TpExit]: Teleported to ExitRegion.")
+                Rayfield:Notify({
+   Title = "Peteware",
+   Content = "Teleported to Exit.",
+   Duration = 2.5,
+   Image = "bell-ring",
+})
                 local exit = game.Workspace.Multiplayer.Map:FindFirstChild("ExitRegion")
                 if exit then
                     Tpexit()
@@ -925,11 +968,12 @@ local TPExitButton = Tab:CreateButton({
                     end
                 end
             else
-                warn("[TpExit]: ExitRegion TP Failed.")
-                warn("[TpExit]: Player hasn't loaded into the map.")
-                openDevConsole()
-                task.wait(2.5)
-                closeDevConsole()
+                Rayfield:Notify({
+   Title = "Peteware",
+   Content = "Exit Teleport Failed, Cannot teleport in lobby.",
+   Duration = 3.5,
+   Image = "bell-ring",
+})
             end
         end
    end,
@@ -943,15 +987,17 @@ local LobbyTPButton = Tab:CreateButton({
    Name = "Lobby",
    Callback = function()
        local elevatorPosition = Vector3.new(-26, -144, 74)
-        local distance = (HRP.Position - elevatorPosition).Magnitude
+        local distance = (hrp.Position - elevatorPosition).Magnitude
 
         if distance < 500 then
-       HRP.CFrame = CFrame.new(-25, -145, 47)
+       hrp.CFrame = CFrame.new(-25, -145, 47)
        else
-           openDevConsole()
-           warn("[Teleport]: Cannot teleport while In-Game")
-           task.wait(2.5)
-           closeDevConsole()
+           Rayfield:Notify({
+   Title = "Peteware",
+   Content = "Cannot teleport while In-Game.",
+   Duration = 1.5,
+   Image = "bell-ring",
+})
         end
    end,
 })
@@ -960,15 +1006,17 @@ local ElevatorTPButton = Tab:CreateButton({
    Name = "Elevator",
    Callback = function()
        local elevatorPosition = Vector3.new(-26, -144, 74)
-        local distance = (HRP.Position - elevatorPosition).Magnitude
+        local distance = (hrp.Position - elevatorPosition).Magnitude
 
         if distance < 500 then
-       HRP.CFrame = CFrame.new(-26, -144, 74)
+       hrp.CFrame = CFrame.new(-26, -144, 74)
        else
-           openDevConsole()
-           warn("[Teleport]: Cannot teleport while In-Game")
-           task.wait(2.5)
-           closeDevConsole()
+           Rayfield:Notify({
+   Title = "Peteware",
+   Content = "Cannot teleport while In-Game.",
+   Duration = 1.5,
+   Image = "bell-ring",
+})
         end
    end,
 })
@@ -977,15 +1025,17 @@ local SecretAreaTPButton = Tab:CreateButton({
    Name = "Secret Area",
    Callback = function()
        local elevatorPosition = Vector3.new(-26, -144, 74)
-        local distance = (HRP.Position - elevatorPosition).Magnitude
+        local distance = (hrp.Position - elevatorPosition).Magnitude
 
         if distance < 500 then
-       HRP.CFrame = CFrame.new(-61, -177, -40)
+       hrp.CFrame = CFrame.new(-61, -177, -40)
        else
-           openDevConsole()
-           warn("[Teleport]: Cannot teleport while In-Game")
-           task.wait(2.5)
-           closeDevConsole()
+           Rayfield:Notify({
+   Title = "Peteware",
+   Content = "Cannot teleport while In-Game.",
+   Duration = 1.5,
+   Image = "bell-ring",
+})
         end
    end,
 })
@@ -994,10 +1044,10 @@ local Tab = Window:CreateTab("Misc", "circle-ellipsis")
 
 local Section = Tab:CreateSection("Other")
 
-local AutoLock = false
+local autoLock = false
 
 local function StartAutoLock()
-    AutoLock = true
+    autoLock = true
     Rayfield:Notify({
     Title = "Peteware",
    Content = "Auto Insane Lock On. Automatically locks to insane.",
@@ -1005,13 +1055,13 @@ local function StartAutoLock()
    Image = "bell-ring",
 })
     repeat
-	    game:GetService("ReplicatedStorage"):WaitForChild("Remote"):WaitForChild("BuyDifLock"):FireServer()
+	    replicatedStorage:WaitForChild("Remote"):WaitForChild("BuyDifLock"):FireServer()
 	    task.wait(3)
-    until not AutoLock
+    until not autoLock
 end
 
 local function StopAutoLock()
-    AutoLock = false
+    autoLock = false
     Rayfield:Notify({
    Title = "Peteware",
    Content = "Auto Insane Lock Off.",
@@ -1036,10 +1086,10 @@ local AutoLockToggle = Tab:CreateToggle({
 local DestroyExitButton = Tab:CreateButton({
    Name = "Destroy Exit",
    Callback = function()
-       local Map = game.Workspace.Multiplayer:FindFirstChild("Map")
+       local map = game.Workspace.Multiplayer:FindFirstChild("Map")
 
-if Map then
-    local ExitBlock = Map:FindFirstChild("ExitBlock")
+if map then
+    local ExitBlock = map:FindFirstChild("ExitBlock")
     if ExitBlock then
         ExitBlock:Destroy()
         Rayfield:Notify({
@@ -1062,19 +1112,29 @@ else
 
 local Section = Tab:CreateSection("Legit")
 
+_G.ControllerShiftlock = false
+
 local ControllerShiftlockButton = Tab:CreateButton({
    Name = "Controller Shiftlock",
    Callback = function()
+       if _G.ControllerShiftlock then
+           Rayfield:Notify({
+   Title = "Peteware",
+   Content = "Controller Shiftlock Enabled.",
+   Duration = 6.5,
+   Image = "bell-ring",
+})    
+           return
+       end
        Rayfield:Notify({
    Title = "Peteware",
    Content = "Controller Shiftlock Enabled. Controls: RB on Xbox, R1 on Playstation.",
-   Duration = 4.5,
+   Duration = 6.5,
    Image = "bell-ring",
 })    
 
 local shiftlockEnabled = false
 local Input = game:GetService("UserInputService")
-local RunService = game:GetService("RunService")
 local GameSettings = UserSettings():GetService("UserGameSettings")
 local g, J
 
@@ -1084,7 +1144,7 @@ local function ForceShiftLock()
     end)
     if success then g = rotationType end
 
-    J = RunService.RenderStepped:Connect(function()
+    J = runService.RenderStepped:Connect(function()
         pcall(function()
             GameSettings.RotationType = Enum.RotationType.CameraRelative
         end)
@@ -1099,8 +1159,7 @@ local function EndForceShiftLock()
         J:Disconnect()
     end
 end
-
--- Shiftlock R1 Toggle
+       
 Input.InputBegan:Connect(function(input, gameProcessed)
     if gameProcessed then return end
     
@@ -1113,6 +1172,7 @@ Input.InputBegan:Connect(function(input, gameProcessed)
         end
     end
 end)
+       _G.ControllerShiftlock = true
    end,
 })
 
@@ -1189,7 +1249,7 @@ Rayfield:Notify({
    Image = "bell-ring",
 })
 task.wait(1)
-       rejoinServer()
+       RejoinServer()
    end,
 })
 
@@ -1203,14 +1263,14 @@ Rayfield:Notify({
    Image = "bell-ring",
 })
 task.wait(1)
-       serverHop()
+       ServerHop()
    end,
 })
 
-local KeepPeteware = true
+local keepPeteware = true
 local teleportConnection
 
-local KeepPetewareToggle = Tab:CreateToggle({
+local keepPetewareToggle = Tab:CreateToggle({
     Name = "Keep Peteware On Server Hop/Rejoin",
     CurrentValue = false,
     Flag = "KeepPetewareToggle",
@@ -1223,14 +1283,14 @@ local KeepPetewareToggle = Tab:CreateToggle({
                 Image = "bell-ring",
             })
 
-            KeepPeteware = true
+            keepPeteware = true
 
             if teleportConnection then
                 teleportConnection:Disconnect()
             end
-
-            teleportConnection = game.Players.LocalPlayer.OnTeleport:Connect(function(State)
-                if KeepPeteware and queueteleport then
+            
+            teleportConnection = player.OnTeleport:Connect(function(State)
+                if keepPeteware and queueteleport then
                     queueteleport([[
                         local success, err = pcall(function()
                             repeat task.wait() until game:IsLoaded()
@@ -1262,7 +1322,7 @@ local KeepPetewareToggle = Tab:CreateToggle({
     end,
 })
 
-KeepPetewareToggle:Set(true)
+keepPetewareToggle:Set(true)
 
 local RayfieldOptimisation = false
 
@@ -1277,7 +1337,7 @@ local function StartRayfieldOptimisation()
            while RayfieldOptimisation do
         task.wait(0.1)
         pcall(function()
-            local OldRayfieldPath = CoreGui:FindFirstChild("Rayfield-Old")
+            local OldRayfieldPath = coreGui:FindFirstChild("Rayfield-Old")
             if OldRayfieldPath then
                 OldRayfieldPath:Destroy()
             end
@@ -1316,7 +1376,7 @@ elseif not Value then
 local OpenConsoleButton = Tab:CreateButton({
    Name = "Open Console",
    Callback = function()
-       StarterGui:SetCore("DevConsoleVisible", true)
+       starterGui:SetCore("DevConsoleVisible", true)
    end,
 })
 
@@ -1339,7 +1399,7 @@ local DestroyUIButton = Tab:CreateButton({
         else
             task.wait()
             isFarming = false
-             KeepPeteware = false
+             keepPeteware = false
              if teleportConnection then
                 teleportConnection:Disconnect()
              end
@@ -1351,16 +1411,24 @@ local DestroyUIButton = Tab:CreateButton({
     end,
 })
 
-else
-    openDevConsole()
-    warn("[Peteware]: [3/3] Authentication Failed, Please try and reset your HWID")
-    
-    task.wait(1.5)
-    
-    LocalPlayer:Kick("You are not whitelisted. You have not purchased the script or there is an error with it. Please contact the owner of the script (PouPeuu_V2) for support.")
-end
+local sendingStatus = false
+
+runService.RenderStepped:Connect(function()
+    if webhookStatus and not sendingStatus then
+        sendStatus = true
+        autofarmStatus = "🟢"
+        task.wait(60)
+        sendingStatus = false
+        AutofarmWebhook()
+    else
+        task.wait(1)
+        autofarmStatus = "🔴"
+    end
+end)
 
 --[[// Credits
 Infinite Yield: Server Hop and Anti-AFK
 Infinite Yield Discord Server: https://discord.gg/78ZuWSq
+Also my friend for the controller shiftlock
+but he doesnt have anything really he just knows lua
 ]]
