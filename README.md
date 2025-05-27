@@ -6,7 +6,7 @@
 
 - BGSI
 - FE2 Retro Mode
-- Westbound (Soon)
+- Westbound
 
 ## Features
 
