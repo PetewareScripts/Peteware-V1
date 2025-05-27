@@ -182,7 +182,6 @@ end
 --// Autofarm Status Logging
 local autofarmStatus = "🟢"
 local autofarmWebhookUrl = "PLEASE_INPUT_YOUR_WEBHOOK_URL"
-local webhookMessageId = nil
 
 local function AutofarmWebhook()
     local level = playerGui.GameGui.HUD.MenuToggle.Stats.XPStats.Icon.Info.Text
@@ -239,26 +238,12 @@ local function AutofarmWebhook()
 
     if httprequest then
         pcall(function()
-            if not webhookMessageId then
                 local response = httprequest({
                     Url = autofarmWebhookUrl,
                     Method = "POST",
                     Headers = {["Content-Type"] = "application/json"},
                     Body = body
                 })
-                if response and response.Body then
-                    local decoded = httpService:JSONDecode(response.Body)
-                    webhookMessageId = decoded.id
-                end
-            else
-                local updateUrl = autofarmWebhookUrl .. "/messages/" .. webhookMessageId
-                httprequest({
-                    Url = updateUrl,
-                    Method = "PATCH",
-                    Headers = {["Content-Type"] = "application/json"},
-                    Body = body
-                })
-            end
         end)
     end
 end
