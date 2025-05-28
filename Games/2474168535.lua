@@ -540,7 +540,7 @@ local function BagUpgrade()
     hrp.CFrame = CFrame.new(1609, 122, 1519)
 end
 
---// Autofarming Execution
+--// Loop Handler
 runService.RenderStepped:Connect(function()
     if farmActive then
         if not clonedStatus then 
