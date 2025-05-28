@@ -21,6 +21,12 @@ Peteware Development Team
 --// Start Initialised Stopwatch
 local startTime = os.clock()
 
+--// Execution Handler
+if _G.ExecutionLoader then return
+    else
+        _G.ExecutionLoader = true
+end
+
 --// Services & Setup
 setclip = setclipboard or (syn and syn.setclipboard) or (Clipboard and Clipboard.set)
 local runService = game:GetService("RunService")
