@@ -1411,6 +1411,7 @@ local DestroyUIButton = Tab:CreateButton({
 	     autoLockWait = false
              task.wait()
              _G.Execution = false
+	     execution = false
             Rayfield:Destroy()
         end
     end,
