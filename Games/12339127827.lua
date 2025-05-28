@@ -943,7 +943,6 @@ local TPExitButton = Tab:CreateButton({
 
         if hrp then
             local distance = (hrp.Position - elevatorPosition).Magnitude
-
             if distance > radius then
                 Rayfield:Notify({
    Title = "Peteware",
@@ -1125,8 +1124,7 @@ local ControllerShiftlockButton = Tab:CreateButton({
 })    
 
 local shiftlockEnabled = false
-local Input = game:GetService("UserInputService")
-local GameSettings = UserSettings():GetService("UserGameSettings")
+local gameSettings = UserSettings():GetService("UserGameSettings")
 local g, J
 
 local function ForceShiftLock()
@@ -1145,16 +1143,16 @@ end
 local function EndForceShiftLock()
     if J then
         pcall(function()
-            GameSettings.RotationType = g or Enum.RotationType.MovementRelative
+            gameSettings.RotationType = g or Enum.RotationType.MovementRelative
         end)
         J:Disconnect()
     end
 end
        
-Input.InputBegan:Connect(function(input, gameProcessed)
+uis.InputBegan:Connect(function(uis, gameProcessed)
     if gameProcessed then return end
     
-    if input.UserInputType == Enum.UserInputType.Gamepad1 and input.KeyCode == Enum.KeyCode.ButtonR1 then
+    if uis.UserInputType == Enum.UserInputType.Gamepad1 and input.KeyCode == Enum.KeyCode.ButtonR1 then
         shiftlockEnabled = not shiftlockEnabled
         if shiftlockEnabled then
             ForceShiftLock()
