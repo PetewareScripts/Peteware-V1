@@ -229,7 +229,7 @@ end
 closeButton.MouseButton1Click:Connect(CloseWithAnimation)
 
 advertiseButton.MouseButton1Click:Connect(function()
-	announcementText.Text = "Your advertisement has been sent!"
+	announcementText.Text = "📢 Thank you for advertising Peteware!"
 	announcement.Visible = true
 	wait(2)
 	announcement.Visible = false
