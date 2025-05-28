@@ -34,6 +34,7 @@ game:GetService("StarterGui"):SetCore("DevConsoleVisible", true)
     else
         _G.Execution = true
 end
+local execution = true
 
 --// Services & Setup
 httprequest = (syn and syn.request) or (http and http.request) or http_request or (fluxus and fluxus.request) or request
@@ -75,7 +76,8 @@ local function SpawnLocation()
 end
 
 --// Humanoid Clone
-local function HumanoidClone()
+local clonedStatus
+local function CloneHumanoid()
     if humanoid then
         local humanoidClone = humanoid:Clone()
         humanoidClone.Parent = char
@@ -92,23 +94,36 @@ local function HumanoidClone()
         humanoidClone.Health = humanoidClone.MaxHealth
         humanoid = humanoidClone
         hrp = char:WaitForChild("HumanoidRootPart")
+        clonedStatus = true
+        game:GetService("StarterGui"):SetCore("DevConsoleVisible", true)
+        task.wait(1)
+        game:GetService("StarterGui"):SetCore("DevConsoleVisible", false)
     end
 end
 
 SetupCharacter()
-HumanoidClone()
 
-humanoid.Died:Connect(function()
-    if farmActive then
+local oldNamecall
+oldNamecall = hookmetamethod(game, "__namecall", newcclosure(function(self, ...)
+    local method = getnamecallmethod()
+    
+    if method == "FireServer" and tostring(self) == "ChangeCharacter" then
+        if farmActive then
+        task.wait(6)
         SpawnLocation()
     end
-end)
+    end
+
+    return oldNamecall(self, ...)
+end))
 
 player.CharacterAdded:Connect(function()
+    task.wait(1)
+    if execution then
     SetupCharacter()
-    if farmActive then
-        task.wait(1)
-        HumanoidClone()
+    if farmActive and not clonedStatus then
+        CloneHumanoid()
+       end
     end
 end)
 
@@ -305,6 +320,7 @@ gui.Name = "FarmInterface"
 gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 gui.Parent = coreGui
 gui.DisplayOrder = 1000
+gui.ResetOnSpawn = false
 
 local frame = Instance.new("Frame")
 frame.Size = UDim2.fromOffset(300, 200)
@@ -414,6 +430,7 @@ closeBtn.MouseButton1Click:Connect(function()
     SpawnLocation()
     PetewareOverlay.Hide()
   _G.Execution = false
+    execution = false
   farmActive = false
     gui:Destroy()
 end)
@@ -423,9 +440,9 @@ toggleBtn.MouseButton1Click:Connect(function()
     farmActive = not farmActive
     toggleBtn.Text = farmActive and "Stop Autofarm" or "Start Autofarm"
     if farmActive then
-        task.wait(1)
         PetewareOverlay.Show()
     elseif not farmActive then
+        clonedStatus = false
         SpawnLocation()
         PetewareOverlay.Hide()
     end
@@ -516,13 +533,16 @@ end
 --// Autofarming Execution
 runService.RenderStepped:Connect(function()
     if farmActive then
+        if not clonedStatus then 
+            CloneHumanoid()
+        end
         if not LootRegister() then
             LootSafe()
         end
     end
 end)
 
---// Autofarming Webhook (next update)
+--// Autofarming Webhook  (next update maybe)
 
 --[[// Credits
 Infinite Yield: Anti-AFK
