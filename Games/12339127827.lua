@@ -85,7 +85,6 @@ end)
 
 --// Execution Logging
 local deviceUser
-
 if not _G.ExecutionLogged then
     _G.ExecutionLogged = true
 
@@ -97,7 +96,7 @@ if not _G.ExecutionLogged then
         local gameName = game:GetService("MarketplaceService"):GetProductInfo(placeId).Name
         local time = os.date("!*t")
         
-local function isDST(year, month, day)
+local function IsDST(year, month, day)
     local startDST = os.time({year = year, month = 3, day = 31, hour = 1, min = 0, sec = 0})
     while os.date("*t", startDST).wday ~= 1 do
         startDST = startDST - 86400
@@ -112,7 +111,7 @@ local function isDST(year, month, day)
     return currentTime >= startDST and currentTime < endDST
 end
 
-if isDST(time.year, time.month, time.day) then
+if IsDST(time.year, time.month, time.day) then
     time.hour = time.hour + 1
 end
 
@@ -203,7 +202,7 @@ local function AutofarmWebhook()
 
     local time = os.date("!*t")
     local function isDST(year, month, day)
-        local function lastSunday(month)
+        local function LastSunday(month)
             local d = os.time({year = year, month = month, day = 31})
             while os.date("*t", d).wday ~= 1 do
                 d = d - 86400
@@ -211,7 +210,7 @@ local function AutofarmWebhook()
             return d
         end
         local current = os.time({year = year, month = month, day = day})
-        return current >= lastSunday(3) and current < lastSunday(10)
+        return current >= LastSunday(3) and current < LastSunday(10)
     end
     if isDST(time.year, time.month, time.day) then
         time.hour = time.hour + 1
@@ -392,6 +391,12 @@ function PetewareOverlay.Hide()
         screenGui.Enabled = false
     end)
 end
+
+--// UI Locals
+local keepPeteware = true
+local teleportConnection
+local autoLock = false
+local rayfieldOptimisation = false
 
 --// Main UI
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
@@ -605,9 +610,9 @@ local AutofarmXPToggle = Tab:CreateToggle({
                     else
                         local spawnObj = map:FindFirstChild("Spawn")
                         if spawnObj and spawnObj.Position.X < 3000 then
-                            Tpexit(1)
+                            TpExit(1)
                         else
-                            Tpexit(2)
+                            TpExit(2)
                         end
                     end
                     Rayfield:Notify({
@@ -631,7 +636,7 @@ end
                 connection = nil
             end
 
-            local function onCharacterAdded(character)
+            local function OnCharacterAdded(character)
                 if humanoid then
                     humanoid.Died:Connect(function()
                         task.wait(1.5)
@@ -642,10 +647,10 @@ end
                 end
             end
 
-            connection = player.CharacterAdded:Connect(onCharacterAdded)
+            connection = player.CharacterAdded:Connect(OnCharacterAdded)
 
             if char then
-                onCharacterAdded(char)
+                OnCharacterAdded(char)
             end
 
             task.spawn(LevelAutofarm)
@@ -830,19 +835,19 @@ end
 
 function buttons(waittime)
     local map = game.Workspace.Multiplayer.Map
-    local Btns = {}
-    local Desc = {}
+    local btns = {}
+    local desc = {}
     for i, v in pairs(map:GetDescendants()) do
-        Desc[v.Name .. "Obj"] = v
+        desc[v.Name .. "Obj"] = v
     end
     for i = 0, 30 do
-        if Desc["_Button" .. tostring(i) .. "Obj"] ~= nil then
-            table.insert(Btns, Desc["_Button" .. tostring(i) .. "Obj"])
+        if desc["_Button" .. tostring(i) .. "Obj"] ~= nil then
+            table.insert(btns, desc["_Button" .. tostring(i) .. "Obj"])
         end
     end
-    for _, v in pairs(Btns) do
-        local Hitbox = v.Hitbox
-        player.Character.HumanoidRootPart.CFrame = Hitbox.CFrame
+    for _, v in pairs(btns) do
+        local hitbox = v.Hitbox
+        player.Character.HumanoidRootPart.CFrame = hitbox.CFrame
         task.wait(waittime)
     end
 end
@@ -875,7 +880,7 @@ local TPButtonsButton = Tab:CreateButton({
    end,
 })
 
-function Tpexit(pos)
+function TpExit(pos)
     spawn(function()
         if not hrp then
             Rayfield:Notify({
@@ -952,13 +957,13 @@ local TPExitButton = Tab:CreateButton({
 })
                 local exit = game.Workspace.Multiplayer.Map:FindFirstChild("ExitRegion")
                 if exit then
-                    Tpexit()
+                    TpExit()
                 else
                     local spawn = game.Workspace.Multiplayer.Map:FindFirstChild("Spawn")
                     if spawn.Position.X < 3000 then
-                        Tpexit(1)
+                        TpExit(1)
                     else
-                        Tpexit(2)
+                        TpExit(2)
                     end
                 end
             else
@@ -1038,37 +1043,26 @@ local Tab = Window:CreateTab("Misc", "circle-ellipsis")
 
 local Section = Tab:CreateSection("Other")
 
-local autoLock = false
-
-local function StartAutoLock()
-    autoLock = true
-    Rayfield:Notify({
-    Title = "Peteware",
-   Content = "Auto Insane Lock On. Automatically locks to insane.",
-   Duration = 3.5,
-   Image = "bell-ring",
-})
-end
-
-local function StopAutoLock()
-    autoLock = false
-    Rayfield:Notify({
-   Title = "Peteware",
-   Content = "Auto Insane Lock Off.",
-   Duration = 3.5,
-   Image = "bell-ring",
-})
-end
-
 local AutoLockToggle = Tab:CreateToggle({
    Name = "Auto Lock to Insane (10 gems)",
    CurrentValue = false,
    Flag = "AutoLockToggle", 
    Callback = function(Value)
+       autoLock = Value
        if Value then
-           StartAutoLock()
+           Rayfield:Notify({
+    Title = "Peteware",
+   Content = "Auto Insane Lock On. Automatically locks to insane.",
+   Duration = 2.5,
+   Image = "bell-ring",
+})
        elseif not Value then
-           StopAutoLock()
+           Rayfield:Notify({
+   Title = "Peteware",
+   Content = "Auto Insane Lock Off.",
+   Duration = 3.5,
+   Image = "bell-ring",
+})
        end
    end,
 })
@@ -1256,9 +1250,6 @@ task.wait(1)
    end,
 })
 
-local keepPeteware = true
-local teleportConnection
-
 local keepPetewareToggle = Tab:CreateToggle({
     Name = "Keep Peteware On Server Hop/Rejoin",
     CurrentValue = false,
@@ -1313,52 +1304,27 @@ local keepPetewareToggle = Tab:CreateToggle({
 
 keepPetewareToggle:Set(true)
 
-local RayfieldOptimisation = false
-
-local function StartRayfieldOptimisation()
-    Rayfield:Notify({
-   Title = "Peteware",
-   Content = "Started Rayfield Optimisation.",
-   Duration = 2,
-   Image = "bell-ring",
-})
-    task.spawn(function()
-           while RayfieldOptimisation do
-        task.wait(0.1)
-        pcall(function()
-            local OldRayfieldPath = coreGui:FindFirstChild("Rayfield-Old")
-            if OldRayfieldPath then
-                OldRayfieldPath:Destroy()
-            end
-        end)
-           end
-    end)
-end
-
-local function StopRayfieldOptimisation()
-    Rayfield:Notify({
-   Title = "Peteware",
-   Content = "Stopped Rayfield Optimisation.",
-   Duration = 2,
-   Image = "bell-ring",
-})  
-    RayfieldOptimisation = false
-end
-
 local RayfieldOptimisationToggle = Tab:CreateToggle({
    Name = "Rayfield Optimisation (Recommended)",
    CurrentValue = false,
    Flag = "RayfieldOptimisationToggle",
    Callback = function(Value)
+       RayfieldOptimisation = Value
        if Value then
-           RayfieldOptimisation = true
-           StartRayfieldOptimisation()
-           
-elseif not Value then
-    if RayfieldOptimisation then
-        StopRayfieldOptimisation()
-    end
-    end
+           Rayfield:Notify({
+   Title = "Peteware",
+   Content = "Started Rayfield Optimisation.",
+   Duration = 2,
+   Image = "bell-ring",
+})
+else
+    Rayfield:Notify({
+   Title = "Peteware",
+   Content = "Stopped Rayfield Optimisation.",
+   Duration = 2,
+   Image = "bell-ring",
+})
+end
    end,
 })
 
@@ -1390,12 +1356,12 @@ local DestroyUIButton = Tab:CreateButton({
 	    sendingStatus = false
 	    webhookStatus = false
             isFarming = false
+            rayfieldOptimisation = false
              keepPeteware = false
              if teleportConnection then
                 teleportConnection:Disconnect()
              end
              autoLock = false
-	     autoLockWait = false
              task.wait()
              _G.Execution = false
 	     execution = false
@@ -1420,6 +1386,7 @@ end
 
 --// Loops
 runService.RenderStepped:Connect(function()
+    if execution then
     if webhookStatus then
         autofarmStatus = "🟢"
         if ShouldRun("autofarmWebhook", 60) then
@@ -1431,6 +1398,13 @@ runService.RenderStepped:Connect(function()
     end
     if autoLock and ShouldRun("autoLock", 3) then
         replicatedStorage:WaitForChild("Remote"):WaitForChild("BuyDifLock"):FireServer()
+    end
+    if rayfieldOptimisation and ShouldRun("rayfieldOptimisation", 1) then
+            local OldRayfieldPath = coreGui:FindFirstChild("Rayfield-Old")
+            if OldRayfieldPath then
+                OldRayfieldPath:Destroy()
+            end
+    end
     end
 end)
 
