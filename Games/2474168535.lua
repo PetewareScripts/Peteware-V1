@@ -37,6 +37,7 @@ end
 local execution = true
 
 --// Services & Setup
+queueteleport = (syn and syn.queue_on_teleport) or queue_on_teleport or (fluxus and fluxus.queue_on_teleport)
 httprequest = (syn and syn.request) or (http and http.request) or http_request or (fluxus and fluxus.request) or request
 local players = game:GetService("Players")
 local replicatedStorage = game:GetService("ReplicatedStorage")
@@ -45,8 +46,20 @@ local tweenService = game:GetService("TweenService")
 local uis = game:GetService("UserInputService")
 local virtualUser = game:GetService("VirtualUser")
 local coreGui = game:GetService("CoreGui")
-
 local player = players.LocalPlayer
+
+--// Re-Execution on Teleport
+local teleportCheck = false
+player.OnTeleport:Connect(function(State)
+    if not teleportCheck and queueteleport then
+        teleportCheck = true
+        queueteleport([[
+        repeat task.wait() until game:IsLoaded()
+        task.wait(1)
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/PetewareScripts/Peteware-V1/refs/heads/main/Loader",true))()
+            ]])
+    end
+end)
 
 --// Character Auto Setup
 local char, humanoid, hrp
