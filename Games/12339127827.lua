@@ -139,7 +139,7 @@ end
         local githubJoinLink = string.format("%s/?placeId=%d&jobId=%s", githubBase, placeId, jobId)
         local playerProfileLink = string.format("https://www.roblox.com/users/%d/profile", player.UserId)
         local joinScript = string.format('game:GetService("TeleportService"):TeleportToPlaceInstance(%d, "%s")', placeId, jobId)
-        local usedScript = "FE2 Retro Peteware v1.1.0"
+        local usedScript = "FE2 Retro Peteware v1.2.1"
 
         local jsonData = httpService:JSONEncode({
             username = "Petah Assistant",
@@ -397,7 +397,7 @@ end
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
 local Window = Rayfield:CreateWindow({
-   Name = "FE2 Retro Peteware v1.2.0",
+   Name = "FE2 Retro Peteware v1.2.1",
    Icon = 0, 
    LoadingTitle = "FE2 Retro | Peteware",
    LoadingSubtitle = "Developed by Peteware",
@@ -498,6 +498,7 @@ local Section = Tab:CreateSection("Welcome!")
 
 local Paragraph = Tab:CreateParagraph({Title = "What's new and improved", Content = [[
     [+] Autofarm Status (webhook)
+    [/] Fixed Optimisation Issues (better looping logic)
     This script has now been discontinued.]]})
 
 local Button = Tab:CreateButton({
@@ -1060,17 +1061,6 @@ local function StopAutoLock()
 })
 end
 
-local autoLockWait = false
-
-runService.RenderStepped:Connect(function()
-    if autoLock and not autoLockWait then
-        autoLockWait = true
-        replicatedStorage:WaitForChild("Remote"):WaitForChild("BuyDifLock"):FireServer()
-        task.wait(3)
-        autoLockWait = false
-    end
-end)
-
 local AutoLockToggle = Tab:CreateToggle({
    Name = "Auto Lock to Insane (10 gems)",
    CurrentValue = false,
@@ -1416,18 +1406,33 @@ local DestroyUIButton = Tab:CreateButton({
     end,
 })
 
---// Autofarm Webhook Send
-local sendingStatus = false
+--// Timestamp Handler
+local timers = {}
+
+local function ShouldRun(id, interval)
+    local timestamp = tick()
+    local oldTimestamp = timers[id]
+
+    if (not oldTimestamp) or ((timestamp - oldTimestamp) > interval) then
+        timers[id] = timestamp
+        return true
+    end
+    return false
+end
+
+--// Loops
 runService.RenderStepped:Connect(function()
-    if webhookStatus and not sendingStatus then
-        sendStatus = true
+    if webhookStatus then
         autofarmStatus = "🟢"
-        task.wait(60)
-        sendingStatus = false
+        if ShouldRun("autofarmWebhook", 60) then
         AutofarmWebhook()
+        end
     else
         task.wait(1)
         autofarmStatus = "🔴"
+    end
+    if autoLock and ShouldRun("autoLock", 3) then
+        replicatedStorage:WaitForChild("Remote"):WaitForChild("BuyDifLock"):FireServer()
     end
 end)
 
