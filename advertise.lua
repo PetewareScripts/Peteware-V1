@@ -1,7 +1,7 @@
 --// Services & Setup
 local coreGui = game:GetService("CoreGui")
 local tweenService = game:GetService("TweenService")
-local uis = game:GetService("UserInpuouchService")
+local userInputService = game:GetService("UserInputService")
 local textChatService = game:GetService("TextChatService")
 
 --// UI Cleanup
@@ -81,74 +81,45 @@ Instance.new("UICorner", closeButton).CornerRadius = UDim.new(0, 12)
 
 local hoverTween = TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 local clickTween = TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-local closeTween = TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
 
-advertiseButton.MouseEnter:Connect(function()
-	tweenService:Create(advertiseButton, hoverTween, {
+local function AnimateHover(button, enter)
+	local targetProps = enter and {
 		BackgroundColor3 = theme.tabBackgroundSelected,
 		TextColor3 = Color3.new(0, 0, 0),
-		Size = UDim2.new(0.75, -5, 0, 56),
-		Position = UDim2.new(0, 5, 0, 33)
+		Size = UDim2.new(button == closeButton and 0.25 or 0.75, -10, 0, 56),
+		Position = UDim2.new(button == closeButton and 0.75 or 0, 5, 0, 33)
+	} or {
+		BackgroundColor3 = button == closeButton and theme.notificationActionsBackground or theme.topbar,
+		TextColor3 = theme.textColor,
+		Size = UDim2.new(button == closeButton and 0.25 or 0.75, -10, 0, 50),
+		Position = UDim2.new(button == closeButton and 0.75 or 0, 5, 0, 36)
+	}
+	tweenService:Create(button, hoverTween, targetProps):Play()
+end
+
+local function AnimateClick(button, down)
+	tweenService:Create(button, clickTween, {
+		Size = UDim2.new(button == closeButton and 0.25 or 0.75, -10, 0, down and 46 or 56),
+		Position = UDim2.new(button == closeButton and 0.75 or 0, 5, 0, down and 41 or 33)
 	}):Play()
+end
+
+-- Hover + click binds
+for _, button in ipairs({advertiseButton, closeButton}) do
+	button.MouseEnter:Connect(function() AnimateHover(button, true) end)
+	button.MouseLeave:Connect(function() AnimateHover(button, false) end)
+	button.MouseButton1Down:Connect(function() AnimateClick(button, true) end)
+	button.MouseButton1Up:Connect(function() AnimateClick(button, false) end)
+end
+
+advertiseButton.MouseEnter:Connect(function()
 	tweenService:Create(advertiseShadow, hoverTween, {BackgroundTransparency = 0.5}):Play()
 end)
-
 advertiseButton.MouseLeave:Connect(function()
-	tweenService:Create(advertiseButton, hoverTween, {
-		BackgroundColor3 = theme.topbar,
-		TextColor3 = theme.textColor,
-		Size = UDim2.new(0.75, -5, 0, 50),
-		Position = UDim2.new(0, 5, 0, 36)
-	}):Play()
 	tweenService:Create(advertiseShadow, hoverTween, {BackgroundTransparency = 0.75}):Play()
 end)
 
-advertiseButton.MouseButton1Down:Connect(function()
-	tweenService:Create(advertiseButton, clickTween, {
-		Size = UDim2.new(0.75, -5, 0, 46),
-		Position = UDim2.new(0, 5, 0, 41)
-	}):Play()
-end)
-
-advertiseButton.MouseButton1Up:Connect(function()
-	tweenService:Create(advertiseButton, clickTween, {
-		Size = UDim2.new(0.75, -5, 0, 56),
-		Position = UDim2.new(0, 5, 0, 33)
-	}):Play()
-end)
-
-closeButton.MouseEnter:Connect(function()
-	tweenService:Create(closeButton, hoverTween, {
-		BackgroundColor3 = theme.tabBackgroundSelected,
-		TextColor3 = Color3.new(0, 0, 0),
-		Size = UDim2.new(0.25, -10, 0, 56),
-		Position = UDim2.new(0.75, 5, 0, 33)
-	}):Play()
-end)
-
-closeButton.MouseLeave:Connect(function()
-	tweenService:Create(closeButton, hoverTween, {
-		BackgroundColor3 = theme.notificationActionsBackground,
-		TextColor3 = theme.textColor,
-		Size = UDim2.new(0.25, -10, 0, 50),
-		Position = UDim2.new(0.75, 5, 0, 36)
-	}):Play()
-end)
-
-closeButton.MouseButton1Down:Connect(function()
-	tweenService:Create(closeButton, clickTween, {
-		Size = UDim2.new(0.25, -10, 0, 46),
-		Position = UDim2.new(0.75, 5, 0, 41)
-	}):Play()
-end)
-
-closeButton.MouseButton1Up:Connect(function()
-	tweenService:Create(closeButton, clickTween, {
-		Size = UDim2.new(0.25, -10, 0, 56),
-		Position = UDim2.new(0.75, 5, 0, 33)
-	}):Play()
-end)
-
+-- Announcement
 local announcement = Instance.new("Frame")
 announcement.Size = UDim2.new(0, 500, 0, 60)
 announcement.Position = UDim2.new(0.5, -250, 0.25, 0)
@@ -206,7 +177,7 @@ function CloseWithAnimation()
 	end)
 end
 
---// Button Handlers
+-- Button Handlers
 advertiseButton.MouseButton1Click:Connect(function()
 	ShowAnnouncement("📢 Thank you for advertising Peteware!")
 	local generalChannel = textChatService:FindFirstChild("TextChannels") and textChatService.TextChannels:FindFirstChild("RBXGeneral")
@@ -220,8 +191,13 @@ closeButton.MouseButton1Click:Connect(CloseWithAnimation)
 function EnableDrag(frame)
 	local dragging, dragInput, dragStart, startPos
 
+	local function Update(input)
+		local delta = input.Position - dragStart
+		frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+	end
+
 	frame.InputBegan:Connect(function(input)
-		if input.UserInputType == Enum.UserInputType.MouseButton1 then
+		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
 			dragging = true
 			dragStart = input.Position
 			startPos = frame.Position
@@ -234,15 +210,14 @@ function EnableDrag(frame)
 	end)
 
 	frame.InputChanged:Connect(function(input)
-		if input.UserInputType == Enum.UserInputType.MouseMovement then
+		if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
 			dragInput = input
 		end
 	end)
 
-	uis.InputChanged:Connect(function(input)
+	userInputService.InputChanged:Connect(function(input)
 		if input == dragInput and dragging then
-			local delta = input.Position - dragStart
-			frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+			Update(input)
 		end
 	end)
 end
