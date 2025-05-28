@@ -1397,12 +1397,15 @@ local DestroyUIButton = Tab:CreateButton({
             end)
         else
             task.wait()
+	    sendingStatus = false
+	    webhookStatus = false
             isFarming = false
              keepPeteware = false
              if teleportConnection then
                 teleportConnection:Disconnect()
              end
-             AutoLock = false
+             autoLock = false
+	     autoLockWait = false
              task.wait()
              _G.Execution = false
             Rayfield:Destroy()
