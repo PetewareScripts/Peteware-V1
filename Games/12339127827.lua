@@ -37,6 +37,7 @@ game:GetService("StarterGui"):SetCore("DevConsoleVisible", true)
         _G.Execution = true
 end
 
+local execution = true
 
 --// Services & Setup
 queueteleport = (syn and syn.queue_on_teleport) or queue_on_teleport or (fluxus and fluxus.queue_on_teleport)
@@ -78,7 +79,9 @@ end
 
 SetupCharacter()
 player.CharacterAdded:Connect(function()
+	if execution then
     SetupCharacter()
+    end
 end)
 
 --// Execution Logging
