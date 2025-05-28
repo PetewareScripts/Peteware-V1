@@ -1,40 +1,12 @@
---[[
-PLEASE READ - IMPORTANT
-
-© 2025 Peteware
-This project is part of Developers-Toolbox-Peteware, an open-source Roblox toolbox for developing scripts.
-
-Licensed under the MIT License.  
-See the full license at:  
-https://github.com/PetewareScripts/Developers-Toolbox-Peteware/blob/main/LICENSE
-
-**Attribution required:** You must give proper credit to Peteware when using or redistributing this project or its derivatives.
-
-This software is provided "AS IS" without warranties of any kind.  
-Violations of license terms may result in legal action.
-
-Thank you for respecting the license and supporting open source software!
-
-Peteware Development Team
-]]
-
 --// Services & Setup
 local coreGui = game:GetService("CoreGui")
 local tweenService = game:GetService("TweenService")
-local userInputService = game:GetService("UserInputService")
+local uis = game:GetService("UserInpuouchService")
+local textChatService = game:GetService("TextChatService")
 
---// UI Optimise
+--// UI Cleanup
 local oldGui = coreGui:FindFirstChild("PetewareAdvertiseUI")
-if oldGui then
-	oldGui:Destroy()
-end
-
---// Main UI
-local screenGui = Instance.new("ScreenGui")
-screenGui.Name = "PetewareAdvertiseUI"
-screenGui.ResetOnSpawn = false
-screenGui.IgnoreGuiInset = true
-screenGui.Parent = coreGui
+if oldGui then oldGui:Destroy() end
 
 --// Theme
 local theme = {
@@ -48,14 +20,19 @@ local theme = {
 	tabBackgroundSelected = Color3.fromRGB(255, 140, 0)
 }
 
+--// Main UI
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "PetewareAdvertiseUI"
+screenGui.ResetOnSpawn = false
+screenGui.IgnoreGuiInset = true
+screenGui.Parent = coreGui
+
 local container = Instance.new("Frame")
 container.Size = UDim2.new(0, 280, 0, 90)
 container.Position = UDim2.new(0, 20, 1, -120)
 container.BackgroundColor3 = theme.elementBackground
 container.Parent = screenGui
-
-local containerCorner = Instance.new("UICorner", container)
-containerCorner.CornerRadius = UDim.new(0, 14)
+Instance.new("UICorner", container).CornerRadius = UDim.new(0, 14)
 
 local titleLabel = Instance.new("TextLabel")
 titleLabel.Size = UDim2.new(1, -20, 0, 24)
@@ -79,9 +56,7 @@ advertiseButton.BackgroundColor3 = theme.topbar
 advertiseButton.AutoButtonColor = false
 advertiseButton.Parent = container
 advertiseButton.ClipsDescendants = true
-
-local advertiseCorner = Instance.new("UICorner", advertiseButton)
-advertiseCorner.CornerRadius = UDim.new(0, 12)
+Instance.new("UICorner", advertiseButton).CornerRadius = UDim.new(0, 12)
 
 local advertiseShadow = Instance.new("Frame")
 advertiseShadow.Size = UDim2.new(1, 6, 1, 6)
@@ -90,9 +65,7 @@ advertiseShadow.BackgroundColor3 = Color3.new(0, 0, 0)
 advertiseShadow.BackgroundTransparency = 0.75
 advertiseShadow.ZIndex = 0
 advertiseShadow.Parent = advertiseButton
-
-local advertiseShadowCorner = Instance.new("UICorner", advertiseShadow)
-advertiseShadowCorner.CornerRadius = UDim.new(0, 12)
+Instance.new("UICorner", advertiseShadow).CornerRadius = UDim.new(0, 12)
 
 local closeButton = Instance.new("TextButton")
 closeButton.Size = UDim2.new(0.25, -10, 0, 50)
@@ -104,15 +77,151 @@ closeButton.TextSize = 22
 closeButton.BackgroundColor3 = theme.notificationActionsBackground
 closeButton.AutoButtonColor = false
 closeButton.Parent = container
+Instance.new("UICorner", closeButton).CornerRadius = UDim.new(0, 12)
 
-local closeCorner = Instance.new("UICorner", closeButton)
-closeCorner.CornerRadius = UDim.new(0, 12)
+local hoverTween = TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+local clickTween = TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+local closeTween = TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
 
-local dragging, dragInput, dragStart, startPos
+advertiseButton.MouseEnter:Connect(function()
+	tweenService:Create(advertiseButton, hoverTween, {
+		BackgroundColor3 = theme.tabBackgroundSelected,
+		TextColor3 = Color3.new(0, 0, 0),
+		Size = UDim2.new(0.75, -5, 0, 56),
+		Position = UDim2.new(0, 5, 0, 33)
+	}):Play()
+	tweenService:Create(advertiseShadow, hoverTween, {BackgroundTransparency = 0.5}):Play()
+end)
+
+advertiseButton.MouseLeave:Connect(function()
+	tweenService:Create(advertiseButton, hoverTween, {
+		BackgroundColor3 = theme.topbar,
+		TextColor3 = theme.textColor,
+		Size = UDim2.new(0.75, -5, 0, 50),
+		Position = UDim2.new(0, 5, 0, 36)
+	}):Play()
+	tweenService:Create(advertiseShadow, hoverTween, {BackgroundTransparency = 0.75}):Play()
+end)
+
+advertiseButton.MouseButton1Down:Connect(function()
+	tweenService:Create(advertiseButton, clickTween, {
+		Size = UDim2.new(0.75, -5, 0, 46),
+		Position = UDim2.new(0, 5, 0, 41)
+	}):Play()
+end)
+
+advertiseButton.MouseButton1Up:Connect(function()
+	tweenService:Create(advertiseButton, clickTween, {
+		Size = UDim2.new(0.75, -5, 0, 56),
+		Position = UDim2.new(0, 5, 0, 33)
+	}):Play()
+end)
+
+closeButton.MouseEnter:Connect(function()
+	tweenService:Create(closeButton, hoverTween, {
+		BackgroundColor3 = theme.tabBackgroundSelected,
+		TextColor3 = Color3.new(0, 0, 0),
+		Size = UDim2.new(0.25, -10, 0, 56),
+		Position = UDim2.new(0.75, 5, 0, 33)
+	}):Play()
+end)
+
+closeButton.MouseLeave:Connect(function()
+	tweenService:Create(closeButton, hoverTween, {
+		BackgroundColor3 = theme.notificationActionsBackground,
+		TextColor3 = theme.textColor,
+		Size = UDim2.new(0.25, -10, 0, 50),
+		Position = UDim2.new(0.75, 5, 0, 36)
+	}):Play()
+end)
+
+closeButton.MouseButton1Down:Connect(function()
+	tweenService:Create(closeButton, clickTween, {
+		Size = UDim2.new(0.25, -10, 0, 46),
+		Position = UDim2.new(0.75, 5, 0, 41)
+	}):Play()
+end)
+
+closeButton.MouseButton1Up:Connect(function()
+	tweenService:Create(closeButton, clickTween, {
+		Size = UDim2.new(0.25, -10, 0, 56),
+		Position = UDim2.new(0.75, 5, 0, 33)
+	}):Play()
+end)
+
+local announcement = Instance.new("Frame")
+announcement.Size = UDim2.new(0, 500, 0, 60)
+announcement.Position = UDim2.new(0.5, -250, 0.25, 0)
+announcement.BackgroundColor3 = theme.tabBackgroundSelected
+announcement.Visible = false
+announcement.BackgroundTransparency = 1
+announcement.Parent = screenGui
+Instance.new("UICorner", announcement).CornerRadius = UDim.new(0, 12)
+
+local announcementText = Instance.new("TextLabel")
+announcementText.Size = UDim2.new(1, 0, 1, 0)
+announcementText.BackgroundTransparency = 1
+announcementText.TextColor3 = theme.textColor
+announcementText.Font = Enum.Font.GothamBold
+announcementText.TextSize = 22
+announcementText.TextWrapped = true
+announcementText.Text = ""
+announcementText.TextTransparency = 1
+announcementText.Parent = announcement
+
+function ShowAnnouncement(text)
+	announcementText.Text = text
+	announcement.Visible = true
+	tweenService:Create(announcement, TweenInfo.new(0.4), {BackgroundTransparency = 0}):Play()
+	tweenService:Create(announcementText, TweenInfo.new(0.4), {TextTransparency = 0}):Play()
+
+	task.delay(2, function()
+		tweenService:Create(announcement, TweenInfo.new(0.4), {BackgroundTransparency = 1}):Play()
+		tweenService:Create(announcementText, TweenInfo.new(0.4), {TextTransparency = 1}):Play()
+		task.wait(0.4)
+		announcement.Visible = false
+	end)
+end
+
+function CloseWithAnimation()
+	advertiseButton.Active = false
+	closeButton.Active = false
+
+	tweenService:Create(container, TweenInfo.new(0.4), {
+		Size = UDim2.new(0, 0, 0, 0),
+		Position = UDim2.new(container.Position.X.Scale, container.Position.X.Offset + 140, container.Position.Y.Scale, container.Position.Y.Offset + 45),
+		BackgroundTransparency = 1
+	}):Play()
+
+	for _, child in ipairs(container:GetDescendants()) do
+		if child:IsA("TextLabel") or child:IsA("TextButton") then
+			pcall(function()
+				tweenService:Create(child, TweenInfo.new(0.3), {TextTransparency = 1, BackgroundTransparency = 1}):Play()
+			end)
+		end
+	end
+
+	task.delay(0.45, function()
+		screenGui:Destroy()
+	end)
+end
+
+--// Button Handlers
+advertiseButton.MouseButton1Click:Connect(function()
+	ShowAnnouncement("📢 Thank you for advertising Peteware!")
+	local generalChannel = textChatService:FindFirstChild("TextChannels") and textChatService.TextChannels:FindFirstChild("RBXGeneral")
+	if generalChannel and generalChannel:IsA("TextChannel") then
+		generalChannel:SendAsync("FOR OP SCRIPTS JOIN PETEWARE: discorn/4UjSNcPCdh")
+	end
+end)
+
+closeButton.MouseButton1Click:Connect(CloseWithAnimation)
 
 function EnableDrag(frame)
+	local dragging, dragInput, dragStart, startPos
+
 	frame.InputBegan:Connect(function(input)
-		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+		if input.UserInputType == Enum.UserInputType.MouseButton1 then
 			dragging = true
 			dragStart = input.Position
 			startPos = frame.Position
@@ -125,112 +234,17 @@ function EnableDrag(frame)
 	end)
 
 	frame.InputChanged:Connect(function(input)
-		if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+		if input.UserInputType == Enum.UserInputType.MouseMovement then
 			dragInput = input
 		end
 	end)
 
-	userInputService.InputChanged:Connect(function(input)
+	uis.InputChanged:Connect(function(input)
 		if input == dragInput and dragging then
 			local delta = input.Position - dragStart
-			frame.Position = UDim2.new(
-				startPos.X.Scale,
-				startPos.X.Offset + delta.X,
-				startPos.Y.Scale,
-				startPos.Y.Offset + delta.Y
-			)
+			frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
 		end
 	end)
 end
 
 EnableDrag(container)
-
-local hoverTweenInfo = TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-local clickTweenInfo = TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-local closeTweenInfo = TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
-
-advertiseButton.MouseEnter:Connect(function()
-	tweenService:Create(advertiseButton, hoverTweenInfo, {
-		BackgroundColor3 = theme.tabBackgroundSelected,
-		TextColor3 = Color3.new(0, 0, 0),
-		Size = UDim2.new(0.75, -5, 0, 56),
-		Position = UDim2.new(0, 5, 0, 33)
-	}):Play()
-	tweenService:Create(advertiseShadow, hoverTweenInfo, {BackgroundTransparency = 0.5}):Play()
-end)
-
-advertiseButton.MouseLeave:Connect(function()
-	tweenService:Create(advertiseButton, hoverTweenInfo, {
-		BackgroundColor3 = theme.topbar,
-		TextColor3 = theme.textColor,
-		Size = UDim2.new(0.75, -5, 0, 50),
-		Position = UDim2.new(0, 5, 0, 36)
-	}):Play()
-	tweenService:Create(advertiseShadow, hoverTweenInfo, {BackgroundTransparency = 0.75}):Play()
-end)
-
-advertiseButton.MouseButton1Down:Connect(function()
-	tweenService:Create(advertiseButton, clickTweenInfo, {
-		Size = UDim2.new(0.75, -5, 0, 46),
-		Position = UDim2.new(0, 5, 0, 41)
-	}):Play()
-end)
-
-advertiseButton.MouseButton1Up:Connect(function()
-	tweenService:Create(advertiseButton, clickTweenInfo, {
-		Size = UDim2.new(0.75, -5, 0, 56),
-		Position = UDim2.new(0, 5, 0, 33)
-	}):Play()
-end)
-
-local announcement = Instance.new("Frame")
-announcement.Size = UDim2.new(0, 500, 0, 60)
-announcement.Position = UDim2.new(0.5, -250, 0.25, 0)
-announcement.BackgroundColor3 = theme.tabBackgroundSelected
-announcement.Visible = false
-announcement.Parent = screenGui
-
-local announcementCorner = Instance.new("UICorner", announcement)
-announcementCorner.CornerRadius = UDim.new(0, 12)
-
-local announcementText = Instance.new("TextLabel")
-announcementText.Size = UDim2.new(1, 0, 1, 0)
-announcementText.Position = UDim2.new(0, 0, 0, 0)
-announcementText.BackgroundTransparency = 1
-announcementText.TextColor3 = theme.textColor
-announcementText.Font = Enum.Font.GothamBold
-announcementText.TextSize = 22
-announcementText.TextWrapped = true
-announcementText.Text = ""
-announcementText.Parent = announcement
-
-local function CloseWithAnimation()
-	advertiseButton.Active = false
-	closeButton.Active = false
-
-	local tween = tweenService:Create(container, closeTweenInfo, {
-		Size = UDim2.new(0, 0, 0, 0),
-		BackgroundTransparency = 1,
-		Position = UDim2.new(container.Position.X.Scale, container.Position.X.Offset + 140, container.Position.Y.Scale, container.Position.Y.Offset + 45)
-	})
-	for _, child in pairs(screenGui:GetChildren()) do
-		if child:IsA("Frame") or child:IsA("TextLabel") or child:IsA("TextButton") then
-			tweenService:Create(child, closeTweenInfo, {BackgroundTransparency = 1, TextTransparency = 1}):Play()
-		end
-	end
-
-	tween:Play()
-	tween.Completed:Connect(function()
-		screenGui:Destroy()
-	end)
-end
-
---// Button Handlers
-closeButton.MouseButton1Click:Connect(CloseWithAnimation)
-
-advertiseButton.MouseButton1Click:Connect(function()
-	announcementText.Text = "📢 Thank you for advertising Peteware!"
-	announcement.Visible = true
-	wait(2)
-	announcement.Visible = false
-end)
