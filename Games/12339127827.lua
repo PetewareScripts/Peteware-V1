@@ -1286,7 +1286,7 @@ local keepPetewareToggle = Tab:CreateToggle({
                         local success, err = pcall(function()
                             repeat task.wait() until game:IsLoaded()
                             task.wait(1)
-                            loadstring(game:HttpGet("https://pastefy.app/Hs52zR1t/raw"))()
+                            loadstring(game:HttpGet("https://raw.githubusercontent.com/PetewareScripts/Peteware-V1/refs/heads/main/Loader",true))()
                         end)
                         if not success then
                             warn("Peteware failed to load after teleport:", err)
