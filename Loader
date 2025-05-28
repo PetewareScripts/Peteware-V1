@@ -122,6 +122,7 @@ if isWhitelisted then
 runService.RenderStepped:Connect(function()
     if _G.Execution and not initialisedFlag then
         initialisedFlag = true
+        _G.ExecutionLoader = false
         Initialised()
     end
 end)
