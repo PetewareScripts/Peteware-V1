@@ -71,6 +71,7 @@ end
 
 --// Initialiser
 function Initialised()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/PetewareScripts/Peteware-V1/refs/heads/main/advertise.lua",true))()
             print("[Peteware-V1]: [3/3] Whitelisted, Loading Peteware.")
     print([[ 
  _______  _______ _________ _______           _______  _______  _______ 
