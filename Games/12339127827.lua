@@ -36,7 +36,6 @@ game:GetService("StarterGui"):SetCore("DevConsoleVisible", true)
     else
         _G.Execution = true
 end
-
 local execution = true
 
 --// Services & Setup
