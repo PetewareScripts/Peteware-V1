@@ -95,9 +95,6 @@ local function CloneHumanoid()
         humanoid = humanoidClone
         hrp = char:WaitForChild("HumanoidRootPart")
         clonedStatus = true
-        game:GetService("StarterGui"):SetCore("DevConsoleVisible", true)
-        task.wait(1)
-        game:GetService("StarterGui"):SetCore("DevConsoleVisible", false)
     end
 end
 
