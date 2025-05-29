@@ -124,7 +124,6 @@ local function AnimateClick(button, down)
 	}):Play()
 end
 
--- Hover + click binds
 for _, button in ipairs({advertiseButton, closeButton}) do
 	button.MouseEnter:Connect(function() AnimateHover(button, true) end)
 	button.MouseLeave:Connect(function() AnimateHover(button, false) end)
@@ -139,38 +138,38 @@ advertiseButton.MouseLeave:Connect(function()
 	tweenService:Create(advertiseShadow, hoverTween, {BackgroundTransparency = 0.75}):Play()
 end)
 
--- Announcement
-local announcement = Instance.new("Frame")
-announcement.Size = UDim2.new(0, 500, 0, 60)
-announcement.Position = UDim2.new(0.5, -250, 0.25, 0)
-announcement.BackgroundColor3 = theme.tabBackgroundSelected
-announcement.Visible = false
-announcement.BackgroundTransparency = 1
-announcement.Parent = screenGui
-Instance.new("UICorner", announcement).CornerRadius = UDim.new(0, 12)
+--// Notification
+local notification = Instance.new("Frame")
+notification.Size = UDim2.new(0, 500, 0, 60)
+notification.Position = UDim2.new(0.5, -250, 0.25, 0)
+notification.BackgroundColor3 = theme.tabBackgroundSelected
+notification.Visible = false
+notification.BackgroundTransparency = 1
+notification.Parent = screenGui
+Instance.new("UICorner", notification).CornerRadius = UDim.new(0, 12)
 
-local announcementText = Instance.new("TextLabel")
-announcementText.Size = UDim2.new(1, 0, 1, 0)
-announcementText.BackgroundTransparency = 1
-announcementText.TextColor3 = theme.textColor
-announcementText.Font = Enum.Font.GothamBold
-announcementText.TextSize = 22
-announcementText.TextWrapped = true
-announcementText.Text = ""
-announcementText.TextTransparency = 1
-announcementText.Parent = announcement
+local notificationText = Instance.new("TextLabel")
+notificationText.Size = UDim2.new(1, 0, 1, 0)
+notificationText.BackgroundTransparency = 1
+notificationText.TextColor3 = theme.textColor
+notificationText.Font = Enum.Font.GothamBold
+notificationText.TextSize = 22
+notificationText.TextWrapped = true
+notificationText.Text = ""
+notificationText.TextTransparency = 1
+notificationText.Parent = notification
 
-function ShowAnnouncement(text)
-	announcementText.Text = text
-	announcement.Visible = true
-	tweenService:Create(announcement, TweenInfo.new(0.4), {BackgroundTransparency = 0}):Play()
-	tweenService:Create(announcementText, TweenInfo.new(0.4), {TextTransparency = 0}):Play()
+function ShowNotification(text)
+	notificationText.Text = text
+	notification.Visible = true
+	tweenService:Create(notification, TweenInfo.new(0.4), {BackgroundTransparency = 0}):Play()
+	tweenService:Create(notificationText, TweenInfo.new(0.4), {TextTransparency = 0}):Play()
 
 	task.delay(2, function()
-		tweenService:Create(announcement, TweenInfo.new(0.4), {BackgroundTransparency = 1}):Play()
-		tweenService:Create(announcementText, TweenInfo.new(0.4), {TextTransparency = 1}):Play()
+		tweenService:Create(notification, TweenInfo.new(0.4), {BackgroundTransparency = 1}):Play()
+		tweenService:Create(notificationText, TweenInfo.new(0.4), {TextTransparency = 1}):Play()
 		task.wait(0.4)
-		announcement.Visible = false
+		notification.Visible = false
 	end)
 end
 
@@ -197,9 +196,9 @@ function CloseWithAnimation()
 	end)
 end
 
--- Button Handlers
+--// Button Handlers
 advertiseButton.MouseButton1Click:Connect(function()
-	ShowAnnouncement("📢 Thank you for advertising Peteware!")
+	ShowNotification("📢 Thank you for advertising Peteware!")
 	local generalChannel = textChatService:FindFirstChild("TextChannels") and textChatService.TextChannels:FindFirstChild("RBXGeneral")
 	if generalChannel and generalChannel:IsA("TextChannel") then
 		generalChannel:SendAsync("FOR OP SCRIPTS JOIN PETEWARE: discorn/4UjSNcPCdh")
