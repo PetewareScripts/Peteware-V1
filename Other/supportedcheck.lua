@@ -1,4 +1,9 @@
---//UI Check
+--//UI Checks
+local oldUI = game:GetService("CoreGui"):WaitForChild("PetewareNotification")
+if not oldUI then
+	return
+end
+
 local screenGui = game:GetService("CoreGui"):FindFirstChild("Peteware-V1")
 if _G.PetewareUI then
     local supportedGames = {
@@ -21,6 +26,7 @@ local theme = {
 	
 --// Notification
 local notification = Instance.new("Frame", screenGui)
+notification.Name = "PetewareNotification"
 notification.Size = UDim2.new(0, 500, 0, 60)
 notification.Position = UDim2.new(0.5, -250, 0.25, 0)
 notification.BackgroundColor3 = theme.tabBackgroundSelected
