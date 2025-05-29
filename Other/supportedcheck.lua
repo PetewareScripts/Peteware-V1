@@ -7,7 +7,6 @@ local screenGui = coreGui:FindFirstChild("Peteware-V1")
 local oldUI = coreGui:FindFirstChild("PetewareNotification")
 if oldUI then
     oldUI:Destroy()
-    return
 end
 
 --//UI Checks
@@ -61,10 +60,21 @@ function ShowNotification(text)
 		task.wait(0.4)
 		notification.Visible = false
 	end)
-   end
-	
+end
+
 --// Supported Check
-if game.PlaceId == supportedGames then
+local mainPath = "https://raw.githubusercontent.com/PetewareScripts/Peteware-V1/refs/heads/main/Games/"
+function SupportedGame()
+    local success, result = pcall(function()
+        return game:HttpGet(mainPath..game.PlaceId..".lua")
+    end)
+    if not success or result == "404: Not Found" then
+        return false
+    end
+    return true
+end
+	
+if SupportedGame() then
     ShowNotification("Supported Game, Loading Peteware-V1")
     loadstring(game:HttpGet("https://raw.githubusercontent.com/PetewareScripts/Peteware-V1/refs/heads/main/Loader",true))()
     else
