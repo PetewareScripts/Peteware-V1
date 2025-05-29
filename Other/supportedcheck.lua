@@ -18,6 +18,7 @@ local theme = {
 	elementBackgroundHover = Color3.fromRGB(38, 38, 38),
 	tabBackgroundSelected = Color3.fromRGB(255, 140, 0)
 }
+	
 --// Notification
 local notification = Instance.new("Frame", screenGui)
 notification.Size = UDim2.new(0, 500, 0, 60)
@@ -50,6 +51,7 @@ function ShowNotification(text)
 		notification.Visible = false
 	end)
    end
+	
 --// Supported Check
 if game.PlaceId == supportedGames then
     ShowNotification("Supported Game, Loading Peteware-V1")
