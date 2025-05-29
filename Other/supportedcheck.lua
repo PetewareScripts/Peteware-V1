@@ -1,12 +1,22 @@
 --//UI Check
+local screenGui = game:GetService("CoreGui"):FindFirstChild("Peteware-V1")
 if _G.PetewareUI then
     local supportedGames = {
         12339127827,
         2474168535,
         85896571713843
     }
-    
-    local screenGui = game:GetService("CoreGui"):FindFirstChild("Peteware-V1")
+--// Theme
+local theme = {
+	textColor = Color3.fromRGB(235, 235, 235),
+	background = Color3.fromRGB(18, 18, 18),
+	topbar = Color3.fromRGB(28, 28, 30),
+	notificationBackground = Color3.fromRGB(24, 24, 24),
+	notificationActionsBackground = Color3.fromRGB(50, 50, 50),
+	elementBackground = Color3.fromRGB(28, 28, 28),
+	elementBackgroundHover = Color3.fromRGB(38, 38, 38),
+	tabBackgroundSelected = Color3.fromRGB(255, 140, 0)
+}
 --// Notification
 local notification = Instance.new("Frame", screenGui)
 notification.Size = UDim2.new(0, 500, 0, 60)
