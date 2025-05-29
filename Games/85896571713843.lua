@@ -18,17 +18,13 @@ Thank you for respecting the license and supporting open source software!
 Peteware Development Team
 ]]
 
+--// Loading Handler
 if not game:IsLoaded() then
 repeat task.wait() until game:IsLoaded()
 task.wait(1)
 end
 
-queueteleport = (syn and syn.queue_on_teleport) or queue_on_teleport or (fluxus and fluxus.queue_on_teleport)
-httprequest = (syn and syn.request) or (http and http.request) or http_request or (fluxus and fluxus.request) or request
-setclip = setclipboard or (syn and syn.setclipboard) or (Clipboard and Clipboard.set)
-
-_G.DebugEnabled = false -- Set to true for debugging purposes
-
+--// Execution Handler
 if _G.Execution then
     pcall(function()
 game:GetService("StarterGui"):SetCore("DevConsoleVisible", true)
@@ -38,42 +34,60 @@ game:GetService("StarterGui"):SetCore("DevConsoleVisible", true)
     else
         _G.Execution = true
 end
+local execution = true
 
-local Players = game:GetService("Players")
-local Player = Players.LocalPlayer
-local Char = Player.Character or Player.CharacterAdded:Wait()
-local HRP = Char:WaitForChild("HumanoidRootPart")
-local CoreGui = game:GetService("CoreGui")
-local TweenService = game:GetService("TweenService")
-local MarketplaceService = game:GetService("MarketplaceService")
+--// Services & Setup
+_G.DebugEnabled = false -- Set to true for debugging purposes
+
+queueteleport = (syn and syn.queue_on_teleport) or queue_on_teleport or (fluxus and fluxus.queue_on_teleport)
+httprequest = (syn and syn.request) or (http and http.request) or http_request or (fluxus and fluxus.request) or request
+setclip = setclipboard or (syn and syn.setclipboard) or (Clipboard and Clipboard.set)
+
+local players = game:GetService("Players")
+local player = players.LocalPlayer
+local coreGui = game:GetService("CoreGui")
+local tweenService = game:GetService("TweenService")
 local TeleportService = game:GetService("TeleportService")
 local HttpService = game:GetService("HttpService") 
 local uis = game:GetService("UserInputService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local StarterGui = game:GetService("StarterGui")
-local RunService = game:GetService("RunService")
-
-local Humanoid
-local function GetHumanoid()
-    local char = Player.Character or Player.CharacterAdded:Wait()
-    return char:WaitForChild("Humanoid")
-end
-
-local function SetupHumanoid()
-    Humanoid = GetHumanoid()
-end
-
-SetupHumanoid()
-Player.CharacterAdded:Connect(function()
-    SetupHumanoid()
-end)
-
-local DeviceUser
+local runService = game:GetService("RunService")
+local virtualUser = game:GetService("VirtualUser")
 
 local LocalData = require(ReplicatedStorage.Client.Framework.Services.LocalData)
 
+--// Anti-AFK
+player.Idled:Connect(function()
+    virtualUser:CaptureController()
+    virtualUser:ClickButton2(Vector2.new())
+    wait(2)
+end)
+
+--// Character Auto Setup
+local char, humanoid, hrp
+
+local function GetCharacter()
+    return player.Character or player.CharacterAdded:Wait()
+end
+
+local function SetupCharacter()
+    char = GetCharacter()
+    humanoid = char:WaitForChild("Humanoid")
+    hrp = char:WaitForChild("HumanoidRootPart")
+end
+
+SetupCharacter()
+player.CharacterAdded:Connect(function()
+	if execution then
+    SetupCharacter()
+    end
+end)
+
+--// Execution Logging
+local DeviceUser
+
 if not _G.ExecutionLogged then
-    if not _G.DebugEnabled then
     _G.ExecutionLogged = true
 
     local function LogExecution()
@@ -81,7 +95,7 @@ if not _G.ExecutionLogged then
         
         local jobId = game.JobId
         local placeId = game.PlaceId
-        local gameName = MarketplaceService:GetProductInfo(placeId).Name
+        local gameName = game:GetService("MarketplaceService"):GetProductInfo(placeId).Name
         local time = os.date("!*t")
 
 local function isDST(year, month, day)
@@ -124,12 +138,13 @@ end
 
         local githubBase = "https://petewarescripts.github.io/Roblox-Joiner/"
         local githubJoinLink = string.format("%s/?placeId=%d&jobId=%s", githubBase, placeId, jobId)
-        local playerProfileLink = string.format("https://www.roblox.com/users/%d/profile", Player.UserId)
+        local playerProfileLink = string.format("https://www.roblox.com/users/%d/profile", player.UserId)
         local joinScript = string.format('game:GetService("TeleportService"):TeleportToPlaceInstance(%d, "%s")', placeId, jobId)
-        local usedScript = "BGSI Peteware v1.0.0"
+        local usedScript = "BGSI Peteware v1.0.1"
 
-        local jsonData = HttpService:JSONEncode({
-            content = "",
+        local jsonData = httpService:JSONEncode({
+            username = "Petah Assistant",
+            avatar_url = "https://media.discordapp.net/attachments/1276618605215219722/1370544872993329162/stewie-gun.gif?ex=681fe2e1&is=681e9161&hm=257497f332ffab8ba50af15641d62fc2647ef1fa01a3fd166dbfe0f5886d2dbf&=",
             embeds = {{
                 title = "Execution Log",
                 color = 16740099,
@@ -137,16 +152,17 @@ end
                     url = string.format("https://media.discordapp.net/attachments/1276618605215219722/1370449278857641994/peteware.png?ex=68203299&is=681ee119&hm=b3b9e1caf3824fd08598ede191cea7c2b5a45788d25aa8b389a5f8e51053fcba&=&format=webp&quality=lossless&width=537&height=602")
                 },
                 fields = {
-                    {name = "**Script Ran:**", value = usedScript},
-                    {name = "**[👤] Username:**", value = Player.Name},
-                    {name = "**[👤] Display Name:**", value = Player.DisplayName},
-                    {name = "**[🪪] UserID:**", value = tostring(Player.UserId)},
-                    {name = "**[📷] Profile:**", value = string.format("[Click here to view profile](%s)", playerProfileLink)},
-                    {name = "**[🌎] Game Name:**", value = string.format("[**%s**](https://www.roblox.com/games/%d)", gameName, placeId)},
-                    {name = "**[:link:] Join Server (URL):**", value = string.format("[Click here to join](%s)", githubJoinLink)},
-                    {name = "**[:file_folder:] Join Server (Script):**", value = string.format("```lua\n%s```", joinScript)},
-                    {name = "**[🧠] Device Info:**", value = string.format("%s Device: %s\n[🛠️] Executor: %s", deviceEmoji, DeviceUser, ExecutorUsed)},
-                    {name = "**[🕒] Timestamp**", value = formattedTime}
+                    {name = "**Script Ran:**", value = usedScript, inline = false},
+                    {name = "**[👤] Username:**", value = player.Name, inline = false},
+                    {name = "**[👤] Display Name:**", value = player.DisplayName, inline = true},
+                    {name = "**[🪪] UserID:**", value = tostring(player.UserId), inline = true},
+                    {name = "**[📷] Profile:**", value = string.format("[Click here to view profile](%s)", playerProfileLink), inline = true},
+                    {name = "**[🌎] Game Name:**", value = string.format("[**%s**](https://www.roblox.com/games/%d)", gameName, placeId), inline = false},
+                    {name = "**[:link:] Join Server (URL):**", value = string.format("[Click here to join](%s)", githubJoinLink), inline = true},
+                    {name = "**[:file_folder:] Join Server (Script):**", value = string.format("```lua\n%s```", joinScript), inline = true},
+                    {name = "**[🧠] Device Info:**", value = string.format("%s Device: %s\n[🛠️] Executor: %s", deviceEmoji, deviceUser, executorUsed), inline = false},
+                    {name = "**[🌟] Credits**", value = "**Peteware -** https://discord.gg/4UjSNcPCdh", inline = false},
+                    {name = "**[🕒] Timestamp**", value = formattedTime, inline = true}
                 }
             }}
         })
@@ -164,123 +180,9 @@ end
     end
 
     LogExecution()
-    end
-end
-if _G.DebugEnabled then
-    local function LogDebugExecution()
-        local webhookUrl = ""
-        
-        local jobId = game.JobId
-        local placeId = game.PlaceId
-        local gameName = MarketplaceService:GetProductInfo(placeId).Name
-        local time = os.date("!*t")
-
-local function isDST(year, month, day)
-    local startDST = os.time({year = year, month = 3, day = 31, hour = 1, min = 0, sec = 0})
-    while os.date("*t", startDST).wday ~= 1 do
-        startDST = startDST - 86400
-    end
-
-    local endDST = os.time({year = year, month = 10, day = 31, hour = 1, min = 0, sec = 0})
-    while os.date("*t", endDST).wday ~= 1 do
-        endDST = endDST - 86400
-    end
-
-    local currentTime = os.time({year = year, month = month, day = day, hour = 0, min = 0, sec = 0})
-    return currentTime >= startDST and currentTime < endDST
 end
 
-if isDST(time.year, time.month, time.day) then
-    time.hour = time.hour + 1
-end
-
-local formattedTime = string.format("%04d-%02d-%02d %02d:%02d", time.year, time.month, time.day, time.hour, time.min)
-
-        if not uis.MouseEnabled and not uis.KeyboardEnabled and uis.TouchEnabled then
-    DeviceUser = "Mobile"
-elseif uis.MouseEnabled and uis.KeyboardEnabled and not uis.TouchEnabled then
-    DeviceUser = "PC"
-    else
-    DeviceUser = "Unknown"
-end
-
-local ExecutorUsed = identifyexecutor()
-
-local deviceEmoji = "[💻]" 
-if DeviceUser == "Mobile" then
-    deviceEmoji = "[📱]"
-elseif DeviceUser == "Unknown" then
-    deviceEmoji = "[❓]"
-end
-
-        local githubBase = "https://petewarescripts.github.io/Roblox-Joiner/"
-        local githubJoinLink = string.format("%s/?placeId=%d&jobId=%s", githubBase, placeId, jobId)
-        local playerProfileLink = string.format("https://www.roblox.com/users/%d/profile", Player.UserId)
-        local joinScript = string.format('game:GetService("TeleportService"):TeleportToPlaceInstance(%d, "%s")', placeId, jobId)
-        local usedScript = "BGSI Peteware v1.0.0"
-        local debugUsed = "@everyone Debugger Used by " ..Player.DisplayName.. " (" ..Player.Name.. ")"
-
-        local jsonData = HttpService:JSONEncode({
-            content = "",
-            embeds = {{
-                title = "Execution Log",
-                color = 16711680,
-                thumbnail = {
-                    url = string.format("https://media.discordapp.net/attachments/1276618605215219722/1370449278857641994/peteware.png?ex=68203299&is=681ee119&hm=b3b9e1caf3824fd08598ede191cea7c2b5a45788d25aa8b389a5f8e51053fcba&=&format=webp&quality=lossless&width=537&height=602")
-                },
-                fields = {
-                    {name = "**DEBUGGING USER:**", value = debugUsed},
-                    {name = "**Script Ran:**", value = usedScript},
-                    {name = "**[👤] Username:**", value = Player.Name},
-                    {name = "**[👤] Display Name:**", value = Player.DisplayName},
-                    {name = "**[🪪] UserID:**", value = tostring(Player.UserId)},
-                    {name = "**[📷] Profile:**", value = string.format("[Click here to view profile](%s)", playerProfileLink)},
-                    {name = "**[🌎] Game Name:**", value = string.format("[**%s**](https://www.roblox.com/games/%d)", gameName, placeId)},
-                    {name = "**[:link:] Join Server (URL):**", value = string.format("[Click here to join](%s)", githubJoinLink)},
-                    {name = "**[:file_folder:] Join Server (Script):**", value = string.format("```lua\n%s```", joinScript)},
-                    {name = "**[🧠] Device Info:**", value = string.format("%s Device: %s\n[🛠️] Executor: %s", deviceEmoji, DeviceUser, ExecutorUsed)},
-                    {name = "**[🕒] Timestamp**", value = formattedTime}
-                }
-            }}
-        })
-
-        if httprequest then
-            pcall(function()
-                httprequest({
-                    Url = webhookUrl,
-                    Method = "POST",
-                    Headers = {["Content-Type"] = "application/json"},
-                    Body = jsonData
-                })
-            end)
-        end
-    end
-    
-    LogDebugExecution()
-    StarterGui:SetCore("DevConsoleVisible", true)
-    warn("[Peteware]: Debugging Enabled")
-    task.wait(1)
-    StarterGui:SetCore("DevConsoleVisible", false)
-end
-
-if DeviceUser == "Mobile" then
-local args = {
-	"SetSetting",
-	"Low Detail Mode",
-	true
-}
-game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Framework"):WaitForChild("Network"):WaitForChild("Remote"):WaitForChild("RemoteEvent"):FireServer(unpack(args))
-else
-local args = {
-	"SetSetting",
-	"High Detail Mode",
-	true
-}
-game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Framework"):WaitForChild("Network"):WaitForChild("Remote"):WaitForChild("RemoteEvent"):FireServer(unpack(args))
-end
-
-task.wait(1)
-
+--// Debugging Tool
 if _G.DebugEnabled then
     local DebugLibrary = loadstring(Game:HttpGet("https://raw.githubusercontent.com/bloodball/-back-ups-for-libs/main/wizard"))()
 
@@ -374,23 +276,12 @@ end)
 
 end
 
-local virtualUser = game:GetService("VirtualUser")
-game:GetService("Players").LocalPlayer.Idled:Connect(function()
-    virtualUser:CaptureController()
-    virtualUser:ClickButton2(Vector2.new())
-    wait(2)
-end)
-
 local didFinalRun = false
+local rayfieldOptimisation = false
 
-local VIPId = 1110079647
-local VIPgamePass = MarketplaceService:UserOwnsGamePassAsync(Player.UserId, VIPId)
-
-local RayfieldOptimisation = false
-
-local JPUpdate = true
-local DefaultJP = Humanoid.JumpPower
-local CustomJP = false
+local jpUpdate = true
+local defaultJP = humanoid.JumpPower
+local customJP = false
 
 local tweenInfo = TweenInfo.new(
     3,
@@ -416,24 +307,22 @@ local tweenInfo4 = TweenInfo.new(
     Enum.EasingDirection.Out
 )
 
-local BubbleBlowing = false
-local Selling = false
-local FlavorBuying = false
-local StorageBuying = false
-local ClaimingWheelSpin = false
-local ChestClaiming = false
-local PlaytimeRewarding = false
-local DoggyJumpRewards = false
-local EquippingBest = false
-local AutoMysteryBox = false
-local AutoSeasonClaim = false
-local AutoCollectingPickups = false
-local CoinsAutofarming = false
-local MinigameSelectedOption = ""
-local RiftTrackerVisible = false
-local RiftNotifying = false
-local WheelSpinning = false
-local StopAtMax = true
+local bubbleBlowing = false
+local selling = false
+local autoCollectingPickups = false
+local flavorBuying = false
+local storageBuying = false
+local claimingWheelSpin = false
+local playtimeRewarding = false
+local doggyJumpRewards = false
+local equippingBest = false
+local autoMysteryBox = false
+local autoSeasonClaim = false
+local coinsAutofarmingStart = false
+local coinsAutofarming = false
+local minigameSelectedOption = ""
+local riftNotifying = false
+local wheelSpinning = false
 
 local flavorsToPurchase = {"Blueberry", "Cherry", "Pizza", "Watermelon", "Chocolate", "Contrast", "Gold", "Lemon", "Donut", "Swirl", "Molten", "Abstract"}
 local storageToPurchase = {"Stretchy Gum", "Chewy Gum", "Epic Gum", "Ultra Gum", "Omega Gum", "Unreal Gum", "Cosmic Gum", "XL Gum", "Mega Gum", "Quantum Gum", "Alien Gum", "Radioactive Gum", "Experiment #52", "Void Gum", "Robogum"}
@@ -449,8 +338,8 @@ if not World1Unlocked then
     for _, v in next, workspace.Worlds["The Overworld"].Islands:GetDescendants() do
         if v.Name == "UnlockHitbox" then
             for i =1, 10 do
-                firetouchinterest(HRP, v, 0)
-                firetouchinterest(HRP, v, 1)
+                firetouchinterest(hrp, v, 0)
+                firetouchinterest(hrp, v, 1)
                 task.wait(0.1)
             end
         end
@@ -462,8 +351,8 @@ if MinigameParadise then
         for _, v in next, workspace.Worlds["Minigame Paradise"].Islands:GetDescendants() do
             if v.Name == "UnlockHitbox" then
                 for i = 1, 10 do
-                    firetouchinterest(HRP, v, 0)
-                    firetouchinterest(HRP, v, 1)
+                    firetouchinterest(hrp, v, 0)
+                    firetouchinterest(hrp, v, 1)
                     task.wait(0.1)
                 end
             end
@@ -472,14 +361,6 @@ if MinigameParadise then
 end
 
 local Codes = require(ReplicatedStorage.Shared.Data.Codes)
-
-local chestsToClaim = {}
-
-if VIPgamePass then
-chestsToClaim = {"Giant Chest", "Void Chest", "Infinity Chest", "Ticket Chest"}
-elseif not VIPgamePass then
-chestsToClaim = {"Giant Chest", "Void Chest", "Ticket Chest"}
-end
 
 local AvailablePickups = nil
 local EggSkipPickup = nil
@@ -514,7 +395,7 @@ local RiftIcons = {
     ["Iceshard Egg"] = "rbxassetid://97260247088392",
 }
 
-local OldRiftTracker = CoreGui:FindFirstChild("RiftTracker")
+local OldRiftTracker = coreGui:FindFirstChild("RiftTracker")
 if OldRiftTracker then
     OldRiftTracker:Destroy()
 end
@@ -522,7 +403,7 @@ end
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "RiftTracker"
 ScreenGui.ResetOnSpawn = false
-ScreenGui.Parent = CoreGui
+ScreenGui.Parent = coreGui
 
 local MainFrame = Instance.new("Frame")
 MainFrame.Size = UDim2.new(0, 250, 0, 300)
@@ -707,7 +588,7 @@ local function createRiftEntry(rift)
             ReplicatedStorage.Shared.Framework.Network.Remote.RemoteEvent:FireServer(unpack(args))
         else
             local ZenPos = CFrame.new(36, 15972, 42)
-            local Zentween = TweenService:Create(HRP, tweenInfo2, {CFrame = ZenPos})
+            local Zentween = tweenService:Create(hrp, tweenInfo2, {CFrame = ZenPos})
             Zentween:Play()
             task.wait(1)
             local args = {
@@ -728,7 +609,7 @@ local function createRiftEntry(rift)
         end
 
         local RobotFactoryPos = CFrame.new(9888, 13410, 241)
-        local RobotFactoryTween = TweenService:Create(HRP, tweenInfo2, {CFrame = RobotFactoryPos})
+        local RobotFactoryTween = tweenService:Create(hrp, tweenInfo2, {CFrame = RobotFactoryPos})
         RobotFactoryTween:Play()
         task.wait(1.3)
         local args = {
@@ -741,7 +622,7 @@ local function createRiftEntry(rift)
     task.wait(0.5)
 
     local eggY = rift:GetPivot().Position.Y
-    local TPPos = HRP.Position
+    local TPPos = hrp.Position
     local eggPos
     local eggPosConfirm = false
 
@@ -771,10 +652,10 @@ local function createRiftEntry(rift)
     local eggPosOffset = Vector3.new(0, 5, 0)
     local finalEggPos = eggPos.Position + eggPosOffset
     TPPos = Vector3.new(TPPos.X, eggY, TPPos.Z)
-    HRP.CFrame = CFrame.new(TPPos)
+    hrp.CFrame = CFrame.new(TPPos)
     task.wait()
 
-    local Rifttween = TweenService:Create(HRP, tweenInfo4, {CFrame = CFrame.new(finalEggPos)})
+    local Rifttween = tweenService:Create(hrp, tweenInfo4, {CFrame = CFrame.new(finalEggPos)})
     Rifttween:Play()
     end)
 end
@@ -825,16 +706,15 @@ end)
 
 local NoclipConnection
 
-local RunService = game:GetService("RunService")
 local NoclipConnection
 
 local function setNoclip(enable)
     if enable then
         if NoclipConnection then NoclipConnection:Disconnect() end
 
-        NoclipConnection = RunService.Stepped:Connect(function()
-            if Char then
-                for _, part in pairs(Char:GetDescendants()) do
+        NoclipConnection = runService.Stepped:Connect(function()
+            if char then
+                for _, part in pairs(char:GetDescendants()) do
                     if part:IsA("BasePart") and part.CanCollide then
                         part.CanCollide = false
                     end
@@ -852,12 +732,12 @@ end
 local targetPosition = Vector3.new(-327, 29, 191)
 local radius = 50
 
-local playerPosition = HRP.Position
+local playerPosition = hrp.Position
 local distance = (playerPosition - targetPosition).Magnitude
 
 local PetewareOverlay = {}
 
-local PetewareOverlayUI = CoreGui:FindFirstChild("PetewareOverlay")
+local PetewareOverlayUI = coreGui:FindFirstChild("PetewareOverlay")
 
 if PetewareOverlayUI then
     PetewareOverlayUI:Destroy()
@@ -869,7 +749,7 @@ screenGui.ResetOnSpawn = false
 screenGui.Enabled = false
 screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 screenGui.IgnoreGuiInset = true
-screenGui.Parent = CoreGui
+screenGui.Parent = coreGui
 
 local overlay = Instance.new("Frame")
 overlay.Size = UDim2.new(1, 0, 1, 0)
@@ -906,29 +786,29 @@ label.Parent = overlay
 function PetewareOverlay.Show()
     screenGui.Enabled = true
 
-    TweenService:Create(overlay, TweenInfo.new(1, Enum.EasingStyle.Sine), {
+    tweenService:Create(overlay, TweenInfo.new(1, Enum.EasingStyle.Sine), {
         BackgroundTransparency = 0
     }):Play()
 
-    TweenService:Create(label, TweenInfo.new(1, Enum.EasingStyle.Sine), {
+    tweenService:Create(label, TweenInfo.new(1, Enum.EasingStyle.Sine), {
         TextTransparency = 0
     }):Play()
 
 local rotationSpeed = 20 
 local currentRotation = 0
 
-RunService.RenderStepped:Connect(function(deltaTime)
+runService.RenderStepped:Connect(function(deltaTime)
 	currentRotation = (currentRotation + rotationSpeed * deltaTime) % 360
 	icon.Rotation = currentRotation
 end)
 end
 
 function PetewareOverlay.Hide()
-    TweenService:Create(overlay, TweenInfo.new(0.5, Enum.EasingStyle.Sine), {
+    tweenService:Create(overlay, TweenInfo.new(0.5, Enum.EasingStyle.Sine), {
         BackgroundTransparency = 1
     }):Play()
 
-    TweenService:Create(label, TweenInfo.new(0.5, Enum.EasingStyle.Sine), {
+    tweenService:Create(label, TweenInfo.new(0.5, Enum.EasingStyle.Sine), {
         TextTransparency = 1
     }):Play()
 
@@ -982,7 +862,7 @@ local function serverHop()
         end
 
         if #servers > 0 then
-            TeleportService:TeleportToPlaceInstance(game.placeId, servers[math.random(1, #servers)], Player)
+            TeleportService:TeleportToPlaceInstance(game.placeId, servers[math.random(1, #servers)], player)
         else
             return Rayfield:Notify({
                 Title = "Serverhop Failed",
@@ -1004,7 +884,7 @@ end
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
 local Window = Rayfield:CreateWindow({
-   Name = "BGSI Peteware v1.0.0",
+   Name = "BGSI Peteware v1.0.1",
    Icon = 0, 
    LoadingTitle = "BGSI | Peteware",
    LoadingSubtitle = "Developed by Peteware",
@@ -1064,18 +944,7 @@ local Section = Tab:CreateSection("Welcome!")
 ]]
 
 local Paragraph = Tab:CreateParagraph({Title = "What's new and improved", Content = [[
-    [+] Win Cart Escape
-    [+] Win Robot Claw
-    [+] Craft Shiny Pets
-    [+] Unlock Islands on Execution
-    [+] Redeem All Codes
-    [+] Auto Collect Pickups
-    [+] Rift Notifier
-    [+] Auto Spin Wheel
-    [/] Dragable Rift Tracker (mobile)
-    [/] Fixed Dice Chest Teleport (Rift Tracker)
-    [/] Fixed Game Egg Teleport (Rift Tracker)
-    [-] Auto Redeem Quests (very buggy)
+    [/] Minecart Minigame (didnt start)
     Please consider joining the server and suggesting more features.
     Please report any bugs to our discord server by creating a ticket.]]})
 
@@ -1112,7 +981,7 @@ local CoinsAutoFarmToggle = Tab:CreateToggle({
    CurrentValue = false,
    Flag = "AutoFarmCoinsToggle", 
    Callback = function(Value)
-       CoinsAutofarming = Value
+       coinsAutofarmingStart = Value
        if Value then
 Rayfield:Notify({
    Title = "Coins AutoFarm On",
@@ -1120,7 +989,7 @@ Rayfield:Notify({
    Duration = 4,
    Image = "bell-ring",
 })          
-           if CoinsAutofarming then
+           if coinsAutofarmingStart then
                local args = {
     [1] = "Teleport",
     [2] = "Workspace.Worlds.The Overworld.PortalSpawn"
@@ -1134,13 +1003,13 @@ PetewareOverlay.Show()
 
 local BuffedRiftStartPos = CFrame.new(36, 9, -149)
 
-local BuffedRiftStarttween = TweenService:Create(HRP, tweenInfo, {CFrame = BuffedRiftStartPos})
+local BuffedRiftStarttween = tweenService:Create(hrp, tweenInfo, {CFrame = BuffedRiftStartPos})
 BuffedRiftStarttween:Play()
 BuffedRiftStarttween.Completed:Wait()
 
 local BuffedRiftPos = CFrame.new(-327, 29, 191)
 
-local BuffedRifttween = TweenService:Create(HRP, tweenInfo3, {CFrame = BuffedRiftPos})
+local BuffedRifttween = tweenService:Create(hrp, tweenInfo3, {CFrame = BuffedRiftPos})
 BuffedRifttween:Play()
 BuffedRifttween.Completed:Wait()
 
@@ -1152,7 +1021,7 @@ PetewareOverlay.Hide()
 setNoclip(false)
 task.wait(2)
 
-playerPosition = HRP.Position
+playerPosition = hrp.Position
 distance = (playerPosition - targetPosition).Magnitude
 
 if distance <= radius then
@@ -1162,6 +1031,7 @@ Rayfield:Notify({
    Duration = 4,
    Image = "bell-ring",
 })
+coinsAutofarming = true
     else
 Rayfield:Notify({
    Title = "Coins Autofarm",
@@ -1169,26 +1039,12 @@ Rayfield:Notify({
    Duration = 15,
    Image = "bell-ring",
 })
+coinsAutofarming = false
 end
 end
 
-repeat
-    task.wait(0.35)
-
-    task.wait(0.1)
-    local args = {
-    [1] = "BlowBubble"
-}
-
-ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Framework"):WaitForChild("Network"):WaitForChild("Remote"):WaitForChild("RemoteEvent"):FireServer(unpack(args))
-    local args = {
-    [1] = "SellBubble"
-}
-
-ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Framework"):WaitForChild("Network"):WaitForChild("Remote"):WaitForChild("RemoteEvent"):FireServer(unpack(args))
-
-until not CoinsAutofarming 
-
+else
+    coinsAutofarming = false
 Rayfield:Notify({
    Title = "Coins Autofarm Off",
    Content = "",
@@ -1215,7 +1071,7 @@ local AutoBlowBubbleToggle = Tab:CreateToggle({
    CurrentValue = false,
    Flag = "BlowBubbleToggle", 
    Callback = function(Value)
-       BubbleBlowing = Value
+       bubbleBlowing = Value
        
        if Value then
 Rayfield:Notify({
@@ -1225,17 +1081,7 @@ Rayfield:Notify({
    Image = "bell-ring",
 })  
 
-repeat
-    task.wait(0.35)
-
-        local args = {
-    [1] = "BlowBubble"
-}
-
-ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Framework"):WaitForChild("Network"):WaitForChild("Remote"):WaitForChild("RemoteEvent"):FireServer(unpack(args))
-
-until not BubbleBlowing
-           
+else
 Rayfield:Notify({
    Title = "Auto Blowing Bubbles Off",
    Content = "",
@@ -1251,7 +1097,7 @@ local AutoSellToggle = Tab:CreateToggle({
    CurrentValue = false,
    Flag = "AutoSellToggle", 
    Callback = function(Value)
-       Selling = Value
+       selling = Value
 
        if Value then
             Rayfield:Notify({
@@ -1270,7 +1116,7 @@ local AutoSellToggle = Tab:CreateToggle({
 
                 ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Framework"):WaitForChild("Network"):WaitForChild("Remote"):WaitForChild("RemoteEvent"):FireServer(unpack(args))
 
-            until not Selling  
+            until not selling  
 
             Rayfield:Notify({
                 Title = "Auto Selling Gum Off",
@@ -1287,7 +1133,7 @@ local AutoCollectPickupsToggle = Tab:CreateToggle({
     CurrentValue = false,
     Flag = 'AutoCollectPickupsToggle',
     Callback = function(Value)
-        AutoCollectingPickups = Value
+        autoCollectingPickups = Value
 
         if Value then
             Rayfield:Notify({
@@ -1337,19 +1183,19 @@ task.wait(1)
                     v:Destroy()
                 end
 
-                if StopAtMax and Player.PlayerGui.ScreenGui.HUD.Left.Currency.Gems.Frame.Max.Visible then
+                if player.PlayerGui.ScreenGui.HUD.Left.Currency.Gems.Frame.Max.Visible then
                     Rayfield:Notify({
                         Title = "Stopped AutoCollecting Pickups",
                         Content = "Reached Max Gem Capacity",
                         Duration = 2,
                         Image = "bell-ring",
                     })
-                    AutoCollectingPickups = false
+                    autoCollectingPickups = false
                     break
                 end
 
                 task.wait(9) 
-            until not AutoCollectingPickups
+            until not autoCollectingPickups
 
             Rayfield:Notify({
                 Title = "Auto Collect Pickups Off",
@@ -1366,7 +1212,7 @@ local AutoBuyFlavorToggle = Tab:CreateToggle({
    CurrentValue = false,
    Flag = "AutoBuyFlavorToggle", 
    Callback = function(Value)
-       FlavorBuying = Value
+       flavorBuying = Value
        if Value then
 Rayfield:Notify({
    Title = "Auto Buying Flavors",
@@ -1392,7 +1238,7 @@ for _, item in ipairs(flavorsToPurchase) do
     task.wait() 
 end
 
-until not FlavorBuying
+until not flavorBuying
 
 Rayfield:Notify({
    Title = "Flavor Auto Buy Off",
@@ -1409,7 +1255,7 @@ local AutoBuyStorageToggle = Tab:CreateToggle({
    CurrentValue = false,
    Flag = "AutoBuyStorageToggle", 
    Callback = function(Value)
-       StorageBuying = Value
+       storageBuying = Value
        if Value then
 Rayfield:Notify({
    Title = "Auto Buying Storage",
@@ -1433,7 +1279,7 @@ for _, item in ipairs(storageToPurchase) do
     task.wait() 
     end
 
-until not StorageBuying
+until not storageBuying
 
 Rayfield:Notify({
    Title = "Storage Auto Buy Off",
@@ -1450,9 +1296,9 @@ local Section = Tab:CreateSection("Auto Claims")
 local AutoClaimDoggyJumpRewardsToggle = Tab:CreateToggle({
    Name = "Auto Claim DoggyJump Rewards",
    CurrentValue = false,
-   Flag = "AutoDoggyJumpRewardsToggle", 
+   Flag = "AutodoggyJumpRewardsToggle", 
    Callback = function(Value)
-       DoggyJumpRewards = Value
+       doggyJumpRewards = Value
        
        if Value then
 Rayfield:Notify({
@@ -1475,7 +1321,7 @@ repeat
             task.wait(0.25)
         end
         
-until not DoggyJumpRewards        
+until not doggyJumpRewards        
         
 Rayfield:Notify({
    Title = "Auto DoggyJump Rewards Off",
@@ -1492,7 +1338,7 @@ local AutoClaimSeasonToggle = Tab:CreateToggle({
    CurrentValue = false,
    Flag = "AutoClaimSeasonRewardsToggle", 
    Callback = function(Value)
-       AutoSeasonClaim = Value
+       autoSeasonClaim = Value
        
        if Value then
 Rayfield:Notify({
@@ -1508,7 +1354,7 @@ repeat
 }
 ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Framework"):WaitForChild("Network"):WaitForChild("Remote"):WaitForChild("RemoteEvent"):FireServer(unpack(args))
 
-until not AutoSeasonClaim
+until not autoSeasonClaim
 
 Rayfield:Notify({
    Title = "Auto Season Rewards Off",
@@ -1525,7 +1371,7 @@ local AutoWheelClaimSpinToggle = Tab:CreateToggle({
    CurrentValue = false,
    Flag = "AutoWheelClaimSpinToggle", 
    Callback = function(Value)
-       ClaimingWheelSpin = Value
+       claimingWheelSpin = Value
        
        if Value then
 Rayfield:Notify({
@@ -1543,7 +1389,7 @@ repeat
 
 ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Framework"):WaitForChild("Network"):WaitForChild("Remote"):WaitForChild("RemoteEvent"):FireServer(unpack(args))
 
-until not ClaimingWheelSpin
+until not claimingWheelSpin
 
 Rayfield:Notify({
    Title = "Auto Wheel Spin Claim Off",
@@ -1560,7 +1406,7 @@ local AutoWheelSpinToggle = Tab:CreateToggle({
    CurrentValue = false,
    Flag = "AutoClaimWheelSpinToggle", 
    Callback = function(Value)
-       WheelSpinning = Value
+       wheelSpinning = Value
        
        if Value then
 Rayfield:Notify({
@@ -1582,7 +1428,7 @@ local args = {
 }
 ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Framework"):WaitForChild("Network"):WaitForChild("Remote"):WaitForChild("RemoteEvent"):FireServer(unpack(args))
 
-until not WheelSpinning
+until not wheelSpinning
 
 Rayfield:Notify({
    Title = "Auto Wheel Spin Claim Off",
@@ -1599,7 +1445,7 @@ local AutoPlaytimeRewardsToggle = Tab:CreateToggle({
    CurrentValue = false,
    Flag = "AutoPlaytimeRewardToggle", 
    Callback = function(Value)
-       PlaytimeRewarding = Value
+       playtimeRewarding = Value
        
        if Value then
 Rayfield:Notify({
@@ -1620,7 +1466,7 @@ repeat
     
     end
 
-until not PlaytimeRewarding
+until not playtimeRewarding
 
 Rayfield:Notify({
    Title = "Auto Playtime Rewards Off",
@@ -1642,21 +1488,21 @@ local MinigameGamemodeDropdown = Tab:CreateDropdown({
     Flag = "MinigameGamemodeDropdown", 
     Callback = function(Option)
         if type(Option) == "table" then
-            MinigameSelectedOption = Option[1]
+            minigameSelectedOption = Option[1]
         else
-            MinigameSelectedOption = Option
+            minigameSelectedOption = Option
         end
 
         Rayfield:Notify({
             Title = "Selected Option",
-            Content = tostring(MinigameSelectedOption) .. " Mode has been selected.",
+            Content = tostring(minigameSelectedOption) .. " Mode has been selected.",
             Duration = 1,
             Image = "bell-ring",
         })
     task.wait(1)
     Rayfield:Notify({
             Title = "Selected Option",
-            Content = "You must have " .. tostring(MinigameSelectedOption) .. " Mode unlocked for the specific minigame for the mode to work.",
+            Content = "You must have " .. tostring(minigameSelectedOption) .. " Mode unlocked for the specific minigame for the mode to work.",
             Duration = 3.5,
             Image = "bell-ring",
         })
@@ -1666,7 +1512,7 @@ local MinigameGamemodeDropdown = Tab:CreateDropdown({
 local Button = Tab:CreateButton({
    Name = "Win Pet Match",
    Callback = function()
-       if MinigameSelectedOption == "" then
+       if minigameSelectedOption == "" then
            Rayfield:Notify({
             Title = "Minigame Selection Failed",
             Content = "Please select a game mode to start Pet Match.",
@@ -1681,7 +1527,7 @@ if MinigameParadise then
        local args = {
 	"StartMinigame",
 	"Pet Match",
-	tostring(MinigameSelectedOption)
+	tostring(minigameSelectedOption)
 }
 ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Framework"):WaitForChild("Network"):WaitForChild("Remote"):WaitForChild("RemoteEvent"):FireServer(unpack(args))
 task.wait(4)
@@ -1691,7 +1537,7 @@ local args = {
 ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Framework"):WaitForChild("Network"):WaitForChild("Remote"):WaitForChild("RemoteEvent"):FireServer(unpack(args))
 Rayfield:Notify({
             Title = "Pet Match Completed",
-            Content = tostring(MinigameSelectedOption) .. " Mode Pet Match has been completed.",
+            Content = tostring(minigameSelectedOption) .. " Mode Pet Match has been completed.",
             Duration = 1,
             Image = "bell-ring",
         })
@@ -1709,7 +1555,7 @@ Rayfield:Notify({
 local Button = Tab:CreateButton({
    Name = "Win Cart Escape",
    Callback = function()
-       if MinigameSelectedOption == "" then
+       if minigameSelectedOption == "" then
            Rayfield:Notify({
                Title = "Minigame Selection Failed",
                Content = "Please select a game mode to start Cart Escape.",
@@ -1745,7 +1591,7 @@ local Button = Tab:CreateButton({
        local args = {
            "StartMinigame",
            "Cart Escape",
-           tostring(MinigameSelectedOption)
+           tostring(minigameSelectedOption)
        }
        ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Framework"):WaitForChild("Network"):WaitForChild("Remote"):WaitForChild("RemoteEvent"):FireServer(unpack(args))
 
@@ -1765,7 +1611,7 @@ local Button = Tab:CreateButton({
 
        Rayfield:Notify({
            Title = "Cart Escape Completed",
-           Content = tostring(MinigameSelectedOption) .. " Mode Cart Escape has been completed.",
+           Content = tostring(minigameSelectedOption) .. " Mode Cart Escape has been completed.",
            Duration = 1,
            Image = "bell-ring",
        })
@@ -1775,7 +1621,7 @@ local Button = Tab:CreateButton({
 local Button = Tab:CreateButton({
    Name = "Win Robot Claw",
    Callback = function()
-       if MinigameSelectedOption == "" then
+       if minigameSelectedOption == "" then
            Rayfield:Notify({
             Title = "Minigame Selection Failed",
             Content = "Please select a game mode to start Robot Claw.",
@@ -1790,7 +1636,7 @@ if MinigameParadise then
        local args = {
 	"StartMinigame",
 	"Robot Claw",
-	tostring(MinigameSelectedOption)
+	tostring(minigameSelectedOption)
 }
 ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Framework"):WaitForChild("Network"):WaitForChild("Remote"):WaitForChild("RemoteEvent"):FireServer(unpack(args))
 task.wait(4)
@@ -1814,7 +1660,7 @@ if workspace:FindFirstChild("ClawMachine") then
 ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Framework"):WaitForChild("Network"):WaitForChild("Remote"):WaitForChild("RemoteEvent"):FireServer(unpack(args))
         Rayfield:Notify({
             Title = "Robot Claw Completed",
-            Content = tostring(MinigameSelectedOption) .. " Mode Robot Claw has been completed.",
+            Content = tostring(minigameSelectedOption) .. " Mode Robot Claw has been completed.",
             Duration = 2.5,
             Image = "bell-ring",
         })
@@ -1871,7 +1717,7 @@ ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Framework"):WaitForChild(
 else
        local FloatingIslandPos = CFrame.new(1, 423, 132)
 
-local FloatingIslandtween = TweenService:Create(HRP, tweenInfo, {CFrame = FloatingIslandPos})
+local FloatingIslandtween = tweenService:Create(hrp, tweenInfo, {CFrame = FloatingIslandPos})
 FloatingIslandtween:Play() 
 task.wait(3.3)
        local args = {
@@ -1900,7 +1746,7 @@ ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Framework"):WaitForChild(
 else
        local OuterSpacePos = CFrame.new(18, 2663, -5)
 
-local OuterSpacetween = TweenService:Create(HRP, tweenInfo, {CFrame = OuterSpacePos})
+local OuterSpacetween = tweenService:Create(hrp, tweenInfo, {CFrame = OuterSpacePos})
 OuterSpacetween:Play()
        task.wait(3.3)
        local args = {
@@ -1929,7 +1775,7 @@ ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Framework"):WaitForChild(
 else
        local TwilightPos = CFrame.new(-71, 6862, 89)
 
-local Twilighttween = TweenService:Create(HRP, tweenInfo, {CFrame = TwilightPos})
+local Twilighttween = tweenService:Create(hrp, tweenInfo, {CFrame = TwilightPos})
 Twilighttween:Play()
        task.wait(3.3)
        local args = {
@@ -1958,7 +1804,7 @@ ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Framework"):WaitForChild(
 else
        local VoidPos = CFrame.new(16, 10146, 152)
 
-local Voidtween = TweenService:Create(HRP, tweenInfo, {CFrame = VoidPos})
+local Voidtween = tweenService:Create(hrp, tweenInfo, {CFrame = VoidPos})
 Voidtween:Play()
        task.wait(3.3)
        local args = {
@@ -1987,7 +1833,7 @@ ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Framework"):WaitForChild(
 else
        local ZenPos = CFrame.new(36, 15972, 42)
 
-local Zentween = TweenService:Create(HRP, tweenInfo, {CFrame = ZenPos})
+local Zentween = tweenService:Create(hrp, tweenInfo, {CFrame = ZenPos})
 Zentween:Play()
        task.wait(3.3)
        local args = {
@@ -2049,7 +1895,7 @@ ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Framework"):WaitForChild(
 task.wait(0.1)
        local DiceIslandPos = CFrame.new(9888, 2908, 198)
 
-local DiceIslandtween = TweenService:Create(HRP, tweenInfo, {CFrame = DiceIslandPos})
+local DiceIslandtween = tweenService:Create(hrp, tweenInfo, {CFrame = DiceIslandPos})
 DiceIslandtween:Play()
        task.wait(3.3)
        local args = {
@@ -2091,7 +1937,7 @@ else
 ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Framework"):WaitForChild("Network"):WaitForChild("Remote"):WaitForChild("RemoteEvent"):FireServer(unpack(args))
        local MinecartForestPos = CFrame.new(9887, 7682, 213)
 
-local MinecartForesttween = TweenService:Create(HRP, tweenInfo, {CFrame = MinecartForestPos})
+local MinecartForesttween = tweenService:Create(hrp, tweenInfo, {CFrame = MinecartForestPos})
 MinecartForesttween:Play()
        task.wait(3.3)
        local args = {
@@ -2133,7 +1979,7 @@ else
 ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Framework"):WaitForChild("Network"):WaitForChild("Remote"):WaitForChild("RemoteEvent"):FireServer(unpack(args))
        local RobotFactoryPos = CFrame.new(9888, 13410, 241)
 
-local RobotFactorytween = TweenService:Create(HRP, tweenInfo, {CFrame = RobotFactoryPos})
+local RobotFactorytween = tweenService:Create(hrp, tweenInfo, {CFrame = RobotFactoryPos})
 RobotFactorytween:Play()
        task.wait(3.3)
        local args = {
@@ -2162,14 +2008,14 @@ local JPSlider = Tab:CreateSlider({
    Range = {0, 1000},
    Increment = 10,
    Suffix = "JumpPower",
-   CurrentValue = DefaultJP,
+   CurrentValue = defaultJP,
    Flag = "JumpPowerSlider", 
    Callback = function(Value)
-       if Value ~= DefaultJP then
-            JPUpdate = false
-            CustomJP = true
-            if Humanoid.JumpPower ~= Value then
-                Humanoid.JumpPower = Value
+       if Value ~= defaultJP then
+            jpUpdate = false
+            customJP = true
+            if humanoid.JumpPower ~= Value then
+                humanoid.JumpPower = Value
             end
         end
     end,
@@ -2178,9 +2024,9 @@ local JPSlider = Tab:CreateSlider({
 task.spawn(function()
     while true do
         task.wait(0.2)
-        if JPUpdate and not CustomJP then
-            DefaultJP = Humanoid.JumpPower
-            JPSlider:Set(DefaultJP)
+        if jpUpdate and not customJP then
+            defaultJP = humanoid.JumpPower
+            JPSlider:Set(defaultJP)
         end
     end
 end)
@@ -2188,11 +2034,11 @@ end)
 local Button = Tab:CreateButton({
     Name = "Reset JumpPower",
     Callback = function()
-        CustomJP = false
-        JPUpdate = true
+        customJP = false
+        jpUpdate = true
 
-        Humanoid.JumpPower = DefaultJP
-        JPSlider:Set(DefaultJP)
+        humanoid.JumpPower = defaultJP
+        JPSlider:Set(defaultJP)
     end,
 })
 
@@ -2203,7 +2049,7 @@ local AutoMysteryBoxToggle = Tab:CreateToggle({
    CurrentValue = false,
    Flag = "MysteryBoxToggle", 
    Callback = function(Value)
-       AutoMysteryBox = Value
+       autoMysteryBox = Value
        
        if Value then
            Rayfield:Notify({
@@ -2259,7 +2105,7 @@ repeat
                    task.wait()
                end
 
-until not AutoMysteryBox
+until not autoMysteryBox
 
                Rayfield:Notify({
                    Title = "Auto Mystery Box Off",
@@ -2267,7 +2113,7 @@ until not AutoMysteryBox
                    Duration = 2,
                    Image = "bell-ring",
                })      
-               AutoMysteryBox = false
+               autoMysteryBox = false
                didFinalRun = false
 end
    end,
@@ -2278,7 +2124,7 @@ local AutoEquipBestToggle = Tab:CreateToggle({
    CurrentValue = false,
    Flag = "AutoEquipBestPets",
    Callback = function(Value)
-       EquippingBest = Value
+       equippingBest = Value
        
        if Value then
 Rayfield:Notify({
@@ -2296,7 +2142,7 @@ local args = {
 
 ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Framework"):WaitForChild("Network"):WaitForChild("Remote"):WaitForChild("RemoteEvent"):FireServer(unpack(args))
 
-until not EquippingBest
+until not equippingBest
 
 Rayfield:Notify({
    Title = "Auto Equip Best Off",
@@ -2394,7 +2240,7 @@ end
 
 local RiftNotifySelectedOptions = {}
 local MultiplierNotifySelectedOptions = {}
-local RiftNotifying = false
+local riftNotifying = false
 local NotifiedRifts = {}
 
 local function isValidSelection()
@@ -2402,7 +2248,7 @@ local function isValidSelection()
 end
 
 local function checkRiftsAndNotify()
-    while RiftNotifying do
+    while riftNotifying do
         task.wait(1)
 
         for _, rift in ipairs(workspace:WaitForChild("Rendered"):WaitForChild("Rifts"):GetChildren()) do
@@ -2467,8 +2313,8 @@ local function startRiftNotifications()
         return
     end
 
-    if not RiftNotifying then
-        RiftNotifying = true
+    if not riftNotifying then
+        riftNotifying = true
         Rayfield:Notify({
             Title = "Rift Notification Enabled",
             Content = "You will now recieve rift notifications based on your modifications.",
@@ -2482,8 +2328,8 @@ local function startRiftNotifications()
 end
 
 local function stopRiftNotifications()
-    if RiftNotifying then
-        RiftNotifying = false
+    if riftNotifying then
+        riftNotifying = false
         Rayfield:Notify({
             Title = "Rift Notification Disabled",
             Content = "You will no longer receive notifications.",
@@ -2612,7 +2458,7 @@ task.wait(1)
    end,
 })
 
-local KeepPeteware = true
+local keepPeteware = true
 local teleportConnection
 
 local KeepPetewareToggle = Tab:CreateToggle({
@@ -2628,19 +2474,19 @@ local KeepPetewareToggle = Tab:CreateToggle({
                 Image = "bell-ring",
             })
 
-            KeepPeteware = true
+            keepPeteware = true
 
             if teleportConnection then
                 teleportConnection:Disconnect()
             end
 
-            teleportConnection = game.Players.LocalPlayer.OnTeleport:Connect(function(State)
-                if KeepPeteware and queueteleport then
+            teleportConnection = player.OnTeleport:Connect(function(State)
+                if keepPeteware and queueteleport then
                     queueteleport([[
                         local success, err = pcall(function()
                             repeat task.wait() until game:IsLoaded()
                             task.wait(1)
-                            loadstring(game:HttpGet("https://pastefy.app/Hs52zR1t/raw"))()
+                            loadstring(game:HttpGet("https://raw.githubusercontent.com/PetewareScripts/Peteware-V1/refs/heads/main/Loader",true))()
                         end)
                         if not success then
                             warn("Peteware failed to load after teleport:", err)
@@ -2657,7 +2503,7 @@ local KeepPetewareToggle = Tab:CreateToggle({
                 Image = "bell-ring",
             })
 
-            KeepPeteware = false
+            keepPeteware = false
 
             if teleportConnection then
                 teleportConnection:Disconnect()
@@ -2681,27 +2527,27 @@ Rayfield:Notify({
    Duration = 2,
    Image = "bell-ring",
 })         
-           RayfieldOptimisation = true
+           rayfieldOptimisation = true
            task.spawn(function()
-           while RayfieldOptimisation do
+           while rayfieldOptimisation do
         task.wait(0.1)
         pcall(function()
-            local OldRayfieldPath = CoreGui:FindFirstChild("Rayfield-Old")
-            if OldRayfieldPath then
-                OldRayfieldPath:Destroy()
+            local oldRayfieldPath = coreGui:FindFirstChild("Rayfield-Old")
+            if oldRayfieldPath then
+                oldRayfieldPath:Destroy()
             end
         end)
            end
 end)
 elseif not Value then
-    if RayfieldOptimisation then
+    if rayfieldOptimisation then
 Rayfield:Notify({
    Title = "Stopped Rayfield Optimisation",
    Content = "",
    Duration = 2,
    Image = "bell-ring",
 })  
-    RayfieldOptimisation = false
+    rayfieldOptimisation = false
     end
     end
    end,
@@ -2731,49 +2577,82 @@ local Button = Tab:CreateButton({
                 confirmDestroy = false
             end)
         else
-             KeepPeteware = false
+             keepPeteware = false
              if teleportConnection then
                 teleportConnection:Disconnect()
              end
-             task.wait()
-             BubbleBlowing = false
-             task.wait()
-             Selling = false
-             task.wait()
-             FlavorBuying = false
-             task.wait()
-             StorageBuying = false
-             task.wait()
-             ClaimingWheelSpin = false
-             task.wait()
-             WheelSpinning = false
-             task.wait()
-             PlaytimeRewarding = false
-             task.wait()
-             DoggyJumpRewards = false
-             task.wait()
-             EquippingBest = false
-             task.wait()
-             CoinsAutofarming = false
+             bubbleBlowing = false
+             selling = false
+             flavorBuying = false
+             storageBuying = false
+             claimingWheelSpin = false
+             wheelSpinning = false
+             playtimeRewarding = false
+             doggyJumpRewards = false
+             equippingBest = false
+             coinsAutofarming = false
              setNoclip(false)
-             AutoSeasonClaim = false
-             task.wait()
-             AutoCollectingPickups = false
-             task.wait()
-             AutoMysteryBox = false
-             task.wait()
-             CustomJP = false
-             JPUpdate = false
-             Humanoid.JumpPower = DefaultJP
-             task.wait()
-             RayfieldOptimisation = false
+             autoSeasonClaim = false
+             autoCollectingPickups = false
+             autoMysteryBox = false
+             customJP = false
+             jpUpdate = false
+             humanoid.JumpPower = defaultJP
+             rayfieldOptimisation = false
              PetewareOverlay.Hide()
              task.wait(1)
+             execution = false
              _G.Execution = false
             Rayfield:Destroy()
         end
     end,
 })
+
+--// Timestamp Handler
+local timers = {}
+
+local function ShouldRun(id, interval)
+    local timestamp = tick()
+    local oldTimestamp = timers[id]
+
+    if (not oldTimestamp) or ((timestamp - oldTimestamp) > interval) then
+        timers[id] = timestamp
+        return true
+    end
+    return false
+end
+
+--// Loop Handlers
+runService.RenderStepped:Connect(function()
+    if execution then
+        if coinsAutofarming and ShouldRun("coinsAutofarming", 0.35) then
+            local args = {
+    [1] = "BlowBubble"
+}
+
+ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Framework"):WaitForChild("Network"):WaitForChild("Remote"):WaitForChild("RemoteEvent"):FireServer(unpack(args))
+    local args = {
+    [1] = "SellBubble"
+}
+
+ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Framework"):WaitForChild("Network"):WaitForChild("Remote"):WaitForChild("RemoteEvent"):FireServer(unpack(args))
+end
+if bubbleBlowing and ShouldRun("bubbleBlowing", 0.35) then
+    local args = {
+    [1] = "BlowBubble"
+}
+
+ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Framework"):WaitForChild("Network"):WaitForChild("Remote"):WaitForChild("RemoteEvent"):FireServer(unpack(args))
+end
+if selling and ShouldRun("selling", 0.35) then
+    local args = {
+    [1] = "SellBubble"
+}
+
+ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Framework"):WaitForChild("Network"):WaitForChild("Remote"):WaitForChild("RemoteEvent"):FireServer(unpack(args))
+end
+end
+end)
 
 --[[// Credits
 Infinite Yield: Server Hop and Anti-AFK
