@@ -91,6 +91,7 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/PetewareScripts/Petew
         CloseDevConsole()
 end
 
+if not _G.PetewareUI then
 OpenDevConsole()
 print("[Peteware-V1]: [1/3] Starting authentication.")
 
@@ -103,7 +104,7 @@ local hwidPaste = {
 }
 
 print("[Peteware-V1]: [2/3] Authentication in progress.")
-
+end
 local isWhitelisted = false
 for i, v in pairs(hwidPaste) do
     if v == hwid then
