@@ -121,7 +121,7 @@ if isWhitelisted then
     
 --// Authentification Hook
 runService.RenderStepped:Connect(function()
-    if _G.Execution and not initialisedFlag then
+    if _G.Execution and not initialisedFlag and not _G.PetewareUI then
         initialisedFlag = true
         _G.ExecutionLoader = false
         Initialised()
