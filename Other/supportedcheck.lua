@@ -1,11 +1,16 @@
---//UI Checks
-local oldUI = game:GetService("CoreGui"):WaitForChild("PetewareNotification")
-if not oldUI then
-	return
+--// Services & Setup
+if _G.PetewareUI then
+local tweenService = game:GetService("TweenService")
+local coreGui = game:GetService("CoreGui")
+local screenGui = coreGui:FindFirstChild("Peteware-V1")
+
+local oldUI = coreGui:FindFirstChild("PetewareNotification")
+if oldUI then
+    oldUI:Destroy()
+    return
 end
 
-local screenGui = game:GetService("CoreGui"):FindFirstChild("Peteware-V1")
-if _G.PetewareUI then
+--//UI Checks
     local supportedGames = {
         12339127827,
         2474168535,
