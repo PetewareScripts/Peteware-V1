@@ -18,6 +18,11 @@ Thank you for respecting the license and supporting open source software!
 Peteware Development Team
 ]]
 
+--// Supported Check
+if game.PlaceId ~= 2474168535 then
+    return
+end
+
 --// Loading Handler
 if not game:IsLoaded() then
 repeat task.wait() until game:IsLoaded()
