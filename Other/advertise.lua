@@ -18,15 +18,15 @@ Thank you for respecting the license and supporting open source software!
 Peteware Development Team
 ]]
 
---// UI Cleanup
-local oldGui = coreGui:FindFirstChild("PetewareAdvertiseUI")
-if oldGui then oldGui:Destroy() end
-
 --// Services & Setup
 local coreGui = game:GetService("CoreGui")
 local tweenService = game:GetService("TweenService")
 local userInputService = game:GetService("UserInputService")
 local textChatService = game:GetService("TextChatService")
+
+--// UI Cleanup
+local oldGui = coreGui:FindFirstChild("PetewareAdvertiseUI")
+if oldGui then oldGui:Destroy() end
 
 --// Theme
 local theme = {
