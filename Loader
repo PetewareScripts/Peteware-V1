@@ -46,7 +46,7 @@ end
 --// Supported Checks
 local function UnsupportedGame()
         OpenDevConsole()
-        warn("[Peteware-V1]: [3/3] Authentification Failed, Unsupported Game.")
+        warn("[Peteware-V1]: [3/3] Authentication Failed, Unsupported Game.")
         warn("[Peteware-V1]: [3/3] Please check the Discord to see all supported games.")
         if setclip then
             print("[Peteware-V1]: Discord link copied to clipboard.")
