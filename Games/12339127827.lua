@@ -1411,6 +1411,8 @@ end)
 --[[// Credits
 Infinite Yield: Server Hop and Anti-AFK
 Infinite Yield Discord Server: https://discord.gg/78ZuWSq
+RIP#6666: FPS Booster
+RIP#6666 Discord Server: https://discord.gg/rips
 Also my friend for the controller shiftlock
 but he doesnt have anything really he just knows lua
 ]]
