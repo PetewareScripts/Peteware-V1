@@ -1170,7 +1170,7 @@ local Divider = Tab:CreateDivider()
 
 local Section = Tab:CreateSection("Other Scripts")
 
-local FpsBoosterButton = Tab:CreateButton({
+local FPSBoosterButton = Tab:CreateButton({
     Name = "FPS Booster",
     Callback = function()
         -- Made by RIP#6666
