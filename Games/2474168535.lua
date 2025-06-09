@@ -18,53 +18,63 @@ Thank you for respecting the license and supporting open source software!
 Peteware Development Team
 ]]
 
---// Supported Check
-if game.PlaceId ~= 2474168535 then
-    return
-end
+_G.Debug = false -- set to true for debugging
 
 --// Loading Handler
 if not game:IsLoaded() then
-repeat task.wait() until game:IsLoaded()
-task.wait(1)
+    game.Loaded:Wait()
+    task.wait(1)
 end
 
 --// Execution Handler
 if _G.Execution then
     pcall(function()
-game:GetService("StarterGui"):SetCore("DevConsoleVisible", true)
-        warn("[Peteware]: Already Executed, Destroy the UI first if you want to execute again.")
-        end)
+        game:GetService("starterGui"):SetCore("DevConsoleVisible", true)
+        warn("[Peteware]: Already Executed, Destroy the UI via the settings tab first if you want to execute again.")
+    end)
     return
-    else
-        _G.Execution = true
+else
+    _G.Execution = true
 end
 local execution = true
 
 --// Services & Setup
 queueteleport = (syn and syn.queue_on_teleport) or queue_on_teleport or (fluxus and fluxus.queue_on_teleport)
 httprequest = (syn and syn.request) or (http and http.request) or http_request or (fluxus and fluxus.request) or request
-local players = game:GetService("Players")
-local replicatedStorage = game:GetService("ReplicatedStorage")
-local runService = game:GetService("RunService")
-local tweenService = game:GetService("TweenService")
-local uis = game:GetService("UserInputService")
-local virtualUser = game:GetService("VirtualUser")
-local coreGui = game:GetService("CoreGui")
-local player = players.LocalPlayer
+setclip = setclipboard or (syn and syn.setclipboard) or (Clipboard and Clipboard.set)
 
---// Re-Execution on Teleport
-local teleportCheck = false
-player.OnTeleport:Connect(function(State)
-    if not teleportCheck and queueteleport then
-        teleportCheck = true
-        queueteleport([[
-        repeat task.wait() until game:IsLoaded()
-        task.wait(1)
-        loadstring(game:HttpGet("https://raw.githubusercontent.com/PetewareScripts/Peteware-V1/refs/heads/main/Loader",true))()
-            ]])
-    end
+local players = game:GetService("Players")
+local player = players.LocalPlayer
+local coreGui = game:GetService("CoreGui")
+local tweenService = game:GetService("TweenService")
+local teleportService = game:GetService("TeleportService")
+local httpService = game:GetService("HttpService") 
+local uis = game:GetService("UserInputService")
+local replicatedStorage = game:GetService("ReplicatedStorage")
+local starterGui = game:GetService("StarterGui")
+local runService = game:GetService("RunService")
+local virtualUser = game:GetService("VirtualUser")
+
+--// Anti-AFK
+player.Idled:Connect(function()
+    virtualUser:CaptureController()
+    virtualUser:ClickButton2(Vector2.new())
+    wait(2)
 end)
+
+--// Device Detection
+local deviceUser        
+if not uis.MouseEnabled and not uis.KeyboardEnabled and uis.TouchEnabled then
+    deviceUser = "Mobile"
+elseif uis.MouseEnabled and uis.KeyboardEnabled and not uis.TouchEnabled then
+    deviceUser = "PC"
+else
+    deviceUser = "Unknown"
+end
+
+local function OpenDevConsole()
+    starterGui:SetCore("DevConsoleVisible", true)
+end
 
 --// Character Auto Setup
 local char, humanoid, hrp
@@ -79,178 +89,52 @@ local function SetupCharacter()
     hrp = char:WaitForChild("HumanoidRootPart")
 end
 
-local inventory = player:WaitForChild("States"):WaitForChild("Bag")
-local maxBag = player:WaitForChild("Stats"):WaitForChild("BagSizeLevel"):WaitForChild("CurrentAmount")
-local robRemote = replicatedStorage:WaitForChild("GeneralEvents"):WaitForChild("Rob")
-local depositPoint = CFrame.new(1636.62537, 104.349976, -1736.184)
-
-local farmActive = false
-
-local function SpawnLocation()
-        local args = {
-	"RedRocks",
-}
-    replicatedStorage:WaitForChild("GeneralEvents"):WaitForChild("Spawn"):FireServer(unpack(args))
-end
-
---// Humanoid Clone
-local clonedStatus
-local function CloneHumanoid()
-    if humanoid then
-        local humanoidClone = humanoid:Clone()
-        humanoidClone.Parent = char
-        player.Character = nil
-        humanoidClone:SetStateEnabled(Enum.HumanoidStateType.Dead, false)
-        humanoidClone:SetStateEnabled(Enum.HumanoidStateType.FallingDown, false)
-        humanoidClone:SetStateEnabled(Enum.HumanoidStateType.Physics, false)
-        humanoid:Destroy()
-        player.Character = char
-        workspace.CurrentCamera.CameraSubject = humanoidClone
-        humanoidClone.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None
-        local anim = char:FindFirstChild("Animate")
-        if anim then anim.Disabled = true task.wait() anim.Disabled = false end
-        humanoidClone.Health = humanoidClone.MaxHealth
-        humanoid = humanoidClone
-        hrp = char:WaitForChild("HumanoidRootPart")
-        clonedStatus = true
-    end
-end
-
 SetupCharacter()
-
-local oldNamecall
-oldNamecall = hookmetamethod(game, "__namecall", newcclosure(function(self, ...)
-    local method = getnamecallmethod()
-    
-    if method == "FireServer" and tostring(self) == "ChangeCharacter" then
-        if farmActive then
-        task.wait(6)
-        SpawnLocation()
-    end
-    end
-
-    return oldNamecall(self, ...)
-end))
-
 player.CharacterAdded:Connect(function()
-    task.wait(1)
-    if execution then
     SetupCharacter()
-    if farmActive and not clonedStatus then
-        CloneHumanoid()
-       end
-    end
 end)
 
---// Execution Logging
-local deviceUser
-
-if not _G.ExecutionLogged then
-    _G.ExecutionLogged = true
-
-    local function LogExecution()
-        local webhookUrl = "YOUR_DISCORD_WEBHOOK_URL_HERE"
-        
-        local jobId = game.JobId
-        local placeId = game.PlaceId
-        local gameName = game:GetService("MarketplaceService"):GetProductInfo(placeId).Name
-        local time = os.date("!*t")
-
-local function isDST(year, month, day)
-    local startDST = os.time({year = year, month = 3, day = 31, hour = 1, min = 0, sec = 0})
-    while os.date("*t", startDST).wday ~= 1 do
-        startDST = startDST - 86400
-    end
-
-    local endDST = os.time({year = year, month = 10, day = 31, hour = 1, min = 0, sec = 0})
-    while os.date("*t", endDST).wday ~= 1 do
-        endDST = endDST - 86400
-    end
-
-    local currentTime = os.time({year = year, month = month, day = day, hour = 0, min = 0, sec = 0})
-    return currentTime >= startDST and currentTime < endDST
+local function rejoinServer()
+    teleportService:TeleportToPlaceInstance(game.placeId, game.jobId)
 end
 
-if isDST(time.year, time.month, time.day) then
-    time.hour = time.hour + 1
-end
+local function serverHop()
+    if httprequest then
+        local servers = {}
+        local req = httprequest({Url = string.format("https://games.roblox.com/v1/games/%d/servers/Public?sortOrder=Desc&limit=100&excludeFullGames=true", game.placeId)})
+        local body = httpService:JSONDecode(req.Body)
 
-local formattedTime = string.format("%04d-%02d-%02d %02d:%02d", time.year, time.month, time.day, time.hour, time.min)
-
-        if not uis.MouseEnabled and not uis.KeyboardEnabled and uis.TouchEnabled then
-    deviceUser = "Mobile"
-elseif uis.MouseEnabled and uis.KeyboardEnabled and not uis.TouchEnabled then
-    deviceUser = "PC"
-    else
-    deviceUser = "Unknown"
-end
-
-local executorUsed = identifyexecutor()
-
-local deviceEmoji = "[💻]" 
-if deviceUser == "Mobile" then
-    deviceEmoji = "[📱]"
-elseif deviceUser == "Unknown" then
-    deviceEmoji = "[❓]"
-end
-
-        local githubBase = "https://petewarescripts.github.io/Roblox-Joiner/"
-        local githubJoinLink = string.format("%s/?placeId=%d&jobId=%s", githubBase, placeId, jobId)
-        local playerProfileLink = string.format("https://www.roblox.com/users/%d/profile", player.UserId)
-        local joinScript = string.format('game:GetService("TeleportService"):TeleportToPlaceInstance(%d, "%s")', placeId, jobId)
-        local usedScript = "Westbound Autofarm Peteware v1.1.0"
-
-        local jsonData = game:GetService("HttpService"):JSONEncode({
-            username = "Petah Assistant",
-            avatar_url = "https://media.discordapp.net/attachments/1276618605215219722/1370544872993329162/stewie-gun.gif?ex=681fe2e1&is=681e9161&hm=257497f332ffab8ba50af15641d62fc2647ef1fa01a3fd166dbfe0f5886d2dbf&=",
-            embeds = {{
-                title = "Execution Log",
-                color = 16740099,
-                thumbnail = {
-                    url = string.format("https://media.discordapp.net/attachments/1276618605215219722/1370449278857641994/peteware.png?ex=68203299&is=681ee119&hm=b3b9e1caf3824fd08598ede191cea7c2b5a45788d25aa8b389a5f8e51053fcba&=&format=webp&quality=lossless&width=537&height=602")
-                },
-                fields = {
-                    {name = "**Script Ran:**", value = usedScript, inline = false},
-                    {name = "**[👤] Username:**", value = player.Name, inline = false},
-                    {name = "**[👤] Display Name:**", value = player.DisplayName, inline = true},
-                    {name = "**[🪪] UserID:**", value = tostring(player.UserId), inline = true},
-                    {name = "**[📷] Profile:**", value = string.format("[Click here to view profile](%s)", playerProfileLink), inline = true},
-                    {name = "**[🌎] Game Name:**", value = string.format("[**%s**](https://www.roblox.com/games/%d)", gameName, placeId), inline = false},
-                    {name = "**[:link:] Join Server (URL):**", value = string.format("[Click here to join](%s)", githubJoinLink), inline = true},
-                    {name = "**[:file_folder:] Join Server (Script):**", value = string.format("```lua\n%s```", joinScript), inline = true},
-                    {name = "**[🧠] Device Info:**", value = string.format("%s Device: %s\n[🛠️] Executor: %s", deviceEmoji, deviceUser, executorUsed), inline = false},
-                    {name = "**[🌟] Credits**", value = "**Peteware -** https://discord.gg/4UjSNcPCdh", inline = false},
-                    {name = "**[🕒] Timestamp**", value = formattedTime, inline = true}
-                }
-            }}
-        })
-
-        if httprequest then
-            pcall(function()
-                httprequest({
-                    Url = webhookUrl,
-                    Method = "POST",
-                    Headers = {["Content-Type"] = "application/json"},
-                    Body = jsonData
-                })
-            end)
+        if body and body.data then
+            for i, v in next, body.data do
+                if type(v) == "table" and tonumber(v.playing) and tonumber(v.maxPlayers) and v.playing < v.maxPlayers and v.id ~= game.jobId then
+                    table.insert(servers, 1, v.id)
+                end
+            end
         end
-    end
 
-    LogExecution()
+        if #servers > 0 then
+            teleportService:TeleportToPlaceInstance(game.placeId, servers[math.random(1, #servers)], player)
+        else
+            return Rayfield:Notify({
+                Title = "Serverhop Failed",
+                Content = "Couldnt find a available server.",
+                Duration = 3.5,
+                Image = "bell-ring",
+            })
+        end
+    else
+        Rayfield:Notify({
+                Title = "Incompatible Exploit",
+                Content = "Your exploit does not support this command (missing request).",
+                Duration = 3,
+                Image = "bell-ring",
+            })
+    end
 end
 
---// Anti-AFK
-player.Idled:Connect(function()
-    virtualUser:CaptureController()
-    virtualUser:ClickButton2(Vector2.zero)
-end)
-
---// Overlay UI Setup
 local PetewareOverlay = {}
 
 local PetewareOverlayUI = coreGui:FindFirstChild("PetewareOverlay")
-
 if PetewareOverlayUI then
     PetewareOverlayUI:Destroy()
 end
@@ -329,172 +213,170 @@ function PetewareOverlay.Hide()
     end)
 end
 
---// UI Setup
-local gui = Instance.new("ScreenGui")
-gui.Name = "FarmInterface"
-gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-gui.Parent = coreGui
-gui.DisplayOrder = 1000
-gui.ResetOnSpawn = false
+local PetewarePlatform = {}
 
-local frame = Instance.new("Frame")
-frame.Size = UDim2.fromOffset(300, 200)
-frame.Position = UDim2.new(0.7, 0, 0.5, -100)
-frame.AnchorPoint = Vector2.new(0.5, 0.5)
-frame.BackgroundColor3 = Color3.fromRGB(35, 25, 10)
-frame.BackgroundTransparency = 0.1
-Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 12)
-Instance.new("UIStroke", frame).Color = Color3.fromRGB(220, 130, 40)
-frame.Parent = gui
-
-local title = Instance.new("TextLabel")
-title.Size = UDim2.new(1, -40, 0, 40)
-title.Position = UDim2.new(0, 20, 0, 0)
-title.BackgroundTransparency = 1
-title.Font = Enum.Font.GothamBold
-title.Text = "Westbound Autofarm Peteware v1.0.0"
-title.TextColor3 = Color3.fromRGB(255, 180, 80)
-title.TextSize = 15
-title.TextXAlignment = Enum.TextXAlignment.Left
-title.Parent = frame
-
-local closeBtn = Instance.new("TextButton")
-closeBtn.Text = "X"
-closeBtn.Size = UDim2.new(0, 30, 0, 30)
-closeBtn.Position = UDim2.new(1, -35, 0, 5)
-closeBtn.Font = Enum.Font.GothamBold
-closeBtn.TextSize = 20
-closeBtn.BackgroundTransparency = 1
-closeBtn.TextColor3 = Color3.fromRGB(255, 0, 0)
-closeBtn.Parent = frame
-
-local toggleBtn = Instance.new("TextButton")
-toggleBtn.Size = UDim2.fromOffset(120, 40)
-toggleBtn.Position = UDim2.new(0.5, -60, 1, -60)
-toggleBtn.AnchorPoint = Vector2.new(0.5, 1)
-toggleBtn.BackgroundColor3 = Color3.fromRGB(220, 130, 40)
-toggleBtn.Font = Enum.Font.GothamBold
-toggleBtn.TextSize = 16
-toggleBtn.TextColor3 = Color3.new(1, 1, 1)
-toggleBtn.Text = "Start Autofarm"
-toggleBtn.Parent = frame
-Instance.new("UICorner", toggleBtn).CornerRadius = UDim.new(0, 8)
-
---// Stats UI
-local info = Instance.new("Frame")
-info.Position = UDim2.new(0, 15, 0, 50)
-info.Size = UDim2.new(1, -30, 1, -120)
-info.BackgroundTransparency = 1
-info.Parent = frame
-Instance.new("UIListLayout", info).Padding = UDim.new(0, 8)
-
-local function statLabel(text)
-    local lbl = Instance.new("TextLabel")
-    lbl.Size = UDim2.new(1, 0, 0, 24)
-    lbl.BackgroundTransparency = 1
-    lbl.Font = Enum.Font.Gotham
-    lbl.TextSize = 14
-    lbl.TextColor3 = Color3.fromRGB(255, 200, 120)
-    lbl.TextXAlignment = Enum.TextXAlignment.Left
-    lbl.Text = text
-    lbl.Parent = info
-    return lbl
+local PetewarePlatformPart = workspace:FindFirstChild("PetewarePlatform")
+if PetewarePlatformPart then
+    PetewarePlatformPart:Destroy()
 end
 
-local statusText = statLabel("Autofarm Status: Loading...")
-local cashText = statLabel("Earnings: $0")
-local pingText = statLabel("Ping: Calculating...")
-local fpsText = statLabel("FPS: Loading...")
-local timerText = statLabel("Elapsed Time: 00:00:00")
+local platformPart = Instance.new("Part")
+platformPart.Name = "PetewarePlatform"
+platformPart.Anchored = true
+platformPart.Size = Vector3.new(20, 1, 20)
+platformPart.Position = hrp.CFrame.Position
+platformPart.Material = Enum.Material.Neon
+platformPart.Transparency = 1
+platformPart.CanCollide = false
+platformPart.Color = Color3.fromRGB(230, 90, 10)
+platformPart.TopSurface = Enum.SurfaceType.Smooth
+platformPart.BottomSurface = Enum.SurfaceType.Smooth
 
---// Draggable UI
-local dragging, dragInput, dragStart, startPos, tween
-local function beginDrag(input)
-    dragging = true
-    dragStart, startPos = input.Position, frame.Position
-    input.Changed:Connect(function()
-        if input.UserInputState == Enum.UserInputState.End then dragging = false end
-    end)
+local decal = Instance.new("Decal")
+decal.Texture = "rbxassetid://126732855832692"
+decal.Face = Enum.NormalId.Top
+decal.Transparency = 1
+decal.Parent = platformPart
+
+platformPart.Parent = workspace
+
+function PetewarePlatform.Show()
+platformPart.Transparency = 0
+platformPart.CanCollide = true
+decal.Transparency = 0
 end
-local function UpdateDrag(input)
-    if dragging then
-        local delta = input.Position - dragStart
-        if tween then tween:Cancel() end
-        tween = tweenService:Create(frame, TweenInfo.new(0.08), {
-            Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X,
-                                 startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-        })
-        tween:Play()
-    end
+
+function PetewarePlatform.Hide()
+platformPart.Transparency = 1
+platformPart.CanCollide = false
+decal.Transparency = 1
 end
-for _, obj in ipairs({frame, title}) do
-    obj.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            beginDrag(input)
+
+--// In-Game Setup
+local autoSprint = false
+
+--// Teleports
+local function SpawnLocation(location)
+    local args = {
+	location
+}
+replicatedStorage:WaitForChild("GeneralEvents"):WaitForChild("Spawn"):FireServer(unpack(args))
+end
+
+--// Silent Aim
+local silentAim = false
+local friendCheck = false
+local teamCheck = false
+
+local friendsList = {}
+
+for _, v in pairs(players:GetPlayers()) do
+    if v ~= player then
+        local success, isFriend = pcall(function()
+            return player:IsFriendsWith(v.UserId)
+        end)
+        if success then
+            friendsList[v.UserId] = isFriend
         end
-    end)
-    obj.InputChanged:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
-            UpdateDrag(input)
-        end
-    end)
+    end
 end
 
---// Button Handlers
-closeBtn.MouseButton1Click:Connect(function()
-    SpawnLocation()
-    PetewareOverlay.Hide()
-  _G.Execution = false
-    execution = false
-  farmActive = false
-    gui:Destroy()
-end)
+local camera = game:GetService("Workspace").CurrentCamera
 
-toggleBtn.MouseButton1Click:Connect(function()
-    task.wait(1)
-    farmActive = not farmActive
-    toggleBtn.Text = farmActive and "Stop Autofarm" or "Start Autofarm"
-    if farmActive then
-        PetewareOverlay.Show()
-    elseif not farmActive then
-        clonedStatus = false
-        SpawnLocation()
-        PetewareOverlay.Hide()
-    end
-end)
+local function PlayerChecks()
+   local target = nil
+   local farthestDistance = math.huge
 
---// Stats Update
-local startCash = player:WaitForChild("leaderstats"):WaitForChild("$$").Value
-local seconds, minutes, hours = 0, 0, 0
-local function Format(n)
-    return tostring(n):reverse():gsub("(%d%d%d)", "%1,"):reverse():gsub("^,", "")
+   for i, v in pairs(players.GetPlayers(players)) do
+       if v ~= player and v.Character and v.Character.FindFirstChild(v.Character, "HumanoidRootPart") then
+           if player.Team ~= "Civilians" then
+               if v.Team ~= "Civilians" then
+                   if player.Team == "Cowboys" and v.Team ~= player.Team then
+                   end
+                   if (not friendCheck or not friendsList[v.UserId]) then
+                       if (not teamCheck or v.Team ~= player.Team) then
+                           local distanceFromPlayer = (player.Character.HumanoidRootPart.Position - v.Character.HumanoidRootPart.Position).Magnitude
+                           if distanceFromPlayer < farthestDistance then
+                               farthestDistance = distanceFromPlayer
+                               target = v
+                           end
+                       end
+                   end
+               end
+           end
+       end
+   end
+
+   if target then
+       if _G.Debug then
+           print("Current team:", player.Team)
+           print("Target player:", target.Name)
+           print("Target team:", target.Team)
+       end
+       return target
+   end
 end
 
-task.spawn(function()
-    while task.wait(1) do
-        local ping = game:GetService("Stats"):FindFirstChild("PerformanceStats") and game.Stats.PerformanceStats:FindFirstChild("Ping")
-        pingText.Text = ping and ("Ping: " .. math.floor(ping:GetValue()) .. "ms") or "Ping: N/A"
-        fpsText.Text = "FPS: " .. math.floor(1 / runService.RenderStepped:Wait())
-    end
+local targetDebug = PlayerChecks()
+
+if _G.Debug and silentAim and targetDebug then
+    print("Current team:", player.Team)
+    print("Target player:", targetDebug.Name)
+    print("Target team:", targetDebug.Team)
+end
+
+local gameMetaTable = getrawmetatable(game)
+local oldGameMetaTableNamecall = gameMetaTable.__namecall
+setreadonly(gameMetaTable, false)
+
+gameMetaTable.__namecall = newcclosure(function(object, ...)
+   local namecallMethod = getnamecallmethod()
+   local args = {...}
+
+   if silentAim and tostring(namecallMethod) == "FindPartOnRayWithIgnoreList" then
+       local target = PlayerChecks()
+       
+       if target and target.Character then
+           args[1] = Ray.new(camera.CFrame.Position, (target.Character.Head.Position - camera.CFrame.Position).Unit * (camera.CFrame.Position - target.Character.Head.Position).Magnitude)
+       end
+   end
+
+   return oldGameMetaTableNamecall(object, unpack(args))
 end)
 
-task.spawn(function()
-    while task.wait(1) do
-        if farmActive then
-        statusText.Text = "Autofarm Status: 🟢"    
-        seconds += 1
-        if seconds >= 60 then seconds = 0 minutes += 1 end
-        if minutes >= 60 then minutes = 0 hours += 1 end
-        timerText.Text = string.format("Elapsed Time: %02d:%02d:%02d", hours, minutes, seconds)
-        else
-        statusText.Text = "Autofarm Status: 🔴"    
-        end
-        local currentCash = player.leaderstats["$$"].Value
-        cashText.Text = "Earnings: $" .. Format(currentCash - startCash)
-    end
-end)
+setreadonly(gameMetaTable, true)
 
---// Robbing Logic
+--// Autofarm
+local farmActive = false
+
+local inventory = player:WaitForChild("States"):WaitForChild("Bag")
+local maxBag = player:WaitForChild("Stats"):WaitForChild("BagSizeLevel"):WaitForChild("CurrentAmount")
+local robRemote = replicatedStorage:WaitForChild("GeneralEvents"):WaitForChild("Rob")
+local depositPoint = CFrame.new(1636.62537, 104.349976, -1736.184)
+
+--// Humanoid Clone
+local clonedStatus
+local function CloneHumanoid()
+    if humanoid then
+        local humanoidClone = humanoid:Clone()
+        humanoidClone.Parent = char
+        player.Character = nil
+        humanoidClone:SetStateEnabled(Enum.HumanoidStateType.Dead, false)
+        humanoidClone:SetStateEnabled(Enum.HumanoidStateType.FallingDown, false)
+        humanoidClone:SetStateEnabled(Enum.HumanoidStateType.Physics, false)
+        humanoid:Destroy()
+        player.Character = char
+        workspace.CurrentCamera.CameraSubject = humanoidClone
+        humanoidClone.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None
+        local anim = char:FindFirstChild("Animate")
+        if anim then anim.Disabled = true task.wait() anim.Disabled = false end
+        humanoidClone.Health = humanoidClone.MaxHealth
+        humanoid = humanoidClone
+        hrp = char:WaitForChild("HumanoidRootPart")
+        clonedStatus = true
+    end
+end
+
 local function DepositLoot()
     if hrp then hrp.CFrame = depositPoint end
 end
@@ -541,25 +423,850 @@ local function LootSafe()
     return false
 end
 
-local function BagUpgrade()
-    hrp.CFrame = CFrame.new(1609, 122, 1519)
+--// Autofarm Stats
+local cashStats = "Earnings: $0"
+local pingStats = "Ping: Calculating..."
+local fpsStats = "FPS: Loading..."
+local timerStats = "Elapsed Time: 00:00:00"
+
+local startCash = player:WaitForChild("leaderstats"):WaitForChild("$$").Value
+local seconds, minutes, hours = 0, 0, 0
+local function Format(n)
+    return tostring(n):reverse():gsub("(%d%d%d)", "%1,"):reverse():gsub("^,", "")
 end
 
---// Loop Handler
-runService.RenderStepped:Connect(function()
+--// Visuals
+local enemyESP = false
+local teamESP = false
+local Sense = loadstring(game:HttpGet('https://raw.githubusercontent.com/PetewareScripts/Peteware-V1/refs/heads/main/Other/Sense.lua'))()
+
+--// Settings Configuration
+Sense.sharedSettings.limitDistance = true
+Sense.sharedSettings.maxDistance = 600
+Sense.sharedSettings.useTeamColor = true
+
+--// Enemy ESP
+Sense.teamSettings.enemy.enabled = enemyESP
+Sense.teamSettings.enemy.chams = true
+Sense.teamSettings.enemy.chamsOutlineColor = { Color3.new(1,0,0), 0 }
+Sense.teamSettings.enemy.chamsFillColor = { Color3.new(0.2, 0.2, 0.2), 0.5 }
+
+--// Team ESP
+Sense.teamSettings.friendly.enabled = teamESP
+Sense.teamSettings.friendly.chams = true
+Sense.teamSettings.friendly.chamsOutlineColor = { Color3.new(1,0,0), 0 }
+Sense.teamSettings.friendly.chamsFillColor = { Color3.new(0.2, 0.2, 0.2), 0.5 }
+
+--// ESP Load
+task.wait(1)
+Sense.Load()
+
+--// UI locals
+local rayfieldOptimisation = false
+local keepPeteware = true
+local teleportConnection = false
+local confirmDestroy = false
+
+--// Main UI
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+
+local Window = Rayfield:CreateWindow({
+   Name = "Westbound Peteware v1.0.0",
+   Icon = 0, 
+   LoadingTitle = "Westbound | Peteware",
+   LoadingSubtitle = "Developed by Peteware",
+   Theme = {
+    TextColor = Color3.fromRGB(235, 235, 235),
+
+    Background = Color3.fromRGB(18, 18, 18),
+    Topbar = Color3.fromRGB(28, 28, 30),
+    Shadow = Color3.fromRGB(10, 10, 10),
+
+    NotificationBackground = Color3.fromRGB(24, 24, 24),
+    NotificationActionsBackground = Color3.fromRGB(50, 50, 50),
+
+    TabBackground = Color3.fromRGB(45, 45, 45),
+    TabStroke = Color3.fromRGB(60, 60, 60),
+    TabBackgroundSelected = Color3.fromRGB(255, 140, 0), 
+    TabTextColor = Color3.fromRGB(200, 200, 200),
+    SelectedTabTextColor = Color3.fromRGB(15, 15, 15),
+
+    ElementBackground = Color3.fromRGB(28, 28, 28),
+    ElementBackgroundHover = Color3.fromRGB(38, 38, 38),
+    SecondaryElementBackground = Color3.fromRGB(20, 20, 20),
+    ElementStroke = Color3.fromRGB(55, 55, 55),
+    SecondaryElementStroke = Color3.fromRGB(45, 45, 45),
+
+    SliderBackground = Color3.fromRGB(255, 120, 0),
+    SliderProgress = Color3.fromRGB(255, 140, 0),
+    SliderStroke = Color3.fromRGB(255, 160, 40),
+
+    ToggleBackground = Color3.fromRGB(22, 22, 22),
+    ToggleEnabled = Color3.fromRGB(255, 140, 0),
+    ToggleDisabled = Color3.fromRGB(90, 90, 90),
+    ToggleEnabledStroke = Color3.fromRGB(255, 160, 40),
+    ToggleDisabledStroke = Color3.fromRGB(110, 110, 110),
+    ToggleEnabledOuterStroke = Color3.fromRGB(100, 60, 0),
+    ToggleDisabledOuterStroke = Color3.fromRGB(50, 50, 50),
+
+    DropdownSelected = Color3.fromRGB(36, 36, 36),
+    DropdownUnselected = Color3.fromRGB(26, 26, 26),
+
+    InputBackground = Color3.fromRGB(30, 30, 30),
+    InputStroke = Color3.fromRGB(60, 60, 60),
+    PlaceholderColor = Color3.fromRGB(170, 130, 100)
+},
+
+   DisableRayfieldPrompts = true,
+   DisableBuildWarnings = true, 
+
+   ConfigurationSaving = {
+      Enabled = false,
+      FolderName = nil, 
+      FileName = nil
+   },
+
+   Discord = {
+      Enabled = true, 
+      Invite = "4UjSNcPCdh", 
+      RememberJoins = true 
+   },
+
+   KeySystem = false, 
+   KeySettings = {
+      Title = "Peteware Key System",
+      Subtitle = "Complete the key system for access",
+      Note = "Discord copied to clipboard, ", 
+      FileName = "PetewareKey", 
+      SaveKey = false, 
+      GrabKeyFromSite = false, 
+      Key = {"PetewareOnTop"}
+   }
+})
+
+if deviceUser == "PC" then
+Rayfield:Notify({
+   Title = "IMPORTANT",
+   Content = "When you destroy the UI destroy it via the settings tab.",
+   Duration = 10,
+   Image = "bell-ring",
+})
+else
+Rayfield:Notify({
+   Title = "IMPORTANT",
+   Content = "When you destroy the UI destroy it via the settings tab.",
+   Duration = 3,
+   Image = "bell-ring",
+})    
+end
+
+local Tab = Window:CreateTab("Home", "layout-dashboard")
+
+local Section = Tab:CreateSection("Welcome!")
+
+--[[
+[/] feature
+[+] feature
+[-] feature
+]]
+
+local Paragraph = Tab:CreateParagraph({Title = "What's new and improved", Content = [[
+    Westbound Peteware Release
+    [+] Silent Aim
+    [+] Silent Aim Checks
+    [+] Chams
+    [+] Autofarm
+    [+] Teleports
+    [+] Auto Sprint
+    Please consider joining the server and suggesting more features.
+    Please report any bugs to our discord server by creating a ticket.]]})
+
+local JoinDiscordButton = Tab:CreateButton({
+   Name = "Join Discord",
+   Callback = function()
+       if setclip then
+   setclip("https://discord.gg/4UjSNcPCdh")
+       Rayfield:Notify({
+   Title = "Copied to Clipboard!",
+   Content = "Discord Server Copied to Clipboard.",
+   Duration = 1.5,
+   Image = "bell-ring",
+       })
+   else
+       Rayfield:Notify({
+   Title = "Unsupported Executor",
+   Content = "Your executor doesnt support setclipboard().",
+   Duration = 2.5,
+   Image = "bell-ring",
+       })
+   end
+   end,
+})
+
+local Tab = Window:CreateTab("Main", "gem")
+
+local Section = Tab:CreateSection("Combat")
+
+local SilentAimToggle = Tab:CreateToggle({
+   Name = "Silent Aim",
+   CurrentValue = false,
+   Flag = "SilentAimToggle", 
+   Callback = function(Value)
+       silentAim = Value
+       if silentAim then
+           Rayfield:Notify({
+   Title = "Peteware",
+   Content = "Silent Aim Enabled.",
+   Duration = 2.5,
+   Image = "bell-ring",
+})
+else
+    Rayfield:Notify({
+   Title = "Peteware",
+   Content = "Silent Aim Disabled.",
+   Duration = 1.5,
+   Image = "bell-ring",
+})
+end
+   end,
+})
+
+local Section = Tab:CreateSection("Silent Aim Checks")
+
+local TeamCheckToggle = Tab:CreateToggle({
+   Name = "Team Check",
+   CurrentValue = false,
+   Flag = "TeamCheckToggle", 
+   Callback = function(Value)
+       teamCheck = Value
+       if teamCheck then
+           Rayfield:Notify({
+   Title = "Peteware",
+   Content = "Friend Check Enabled. Silent aim will ignore team.",
+   Duration = 2.5,
+   Image = "bell-ring",
+})
+else
+    Rayfield:Notify({
+   Title = "Peteware",
+   Content = "Friend Check Disabled. Silent aim will target team.",
+   Duration = 1.5,
+   Image = "bell-ring",
+})
+end
+   end,
+})
+
+local FriendCheckToggle = Tab:CreateToggle({
+   Name = "Friend Check",
+   CurrentValue = false,
+   Flag = "FriendCheckToggle", 
+   Callback = function(Value)
+       friendCheck = Value
+       if friendCheck then
+           Rayfield:Notify({
+   Title = "Peteware",
+   Content = "Friend Check Enabled. Silent aim will ignore friends.",
+   Duration = 2.5,
+   Image = "bell-ring",
+})
+else
+    Rayfield:Notify({
+   Title = "Peteware",
+   Content = "Friend Check Disabled. Silent aim will target friends.",
+   Duration = 1.5,
+   Image = "bell-ring",
+})
+end
+   end,
+})
+
+local Section = Tab:CreateSection("Visuals")
+
+local EnemyESPToggle = Tab:CreateToggle({
+   Name = "Enemy ESP",
+   CurrentValue = false,
+   Flag = "EnemyESPToggle", 
+   Callback = function(Value)
+       enemyESP = Value
+       if enemyESP then
+           task.wait()
+           Sense.teamSettings.enemy.enabled = enemyESP
+           Rayfield:Notify({
+   Title = "Peteware",
+   Content = "Enemy ESP Enabled. Highlights all enemies in a 600 studs radius.",
+   Duration = 2.5,
+   Image = "bell-ring",
+})
+else
+    task.wait()
+    Sense.teamSettings.enemy.enabled = enemyESP
+    Rayfield:Notify({
+   Title = "Peteware",
+   Content = "Enemy ESP Enabled.",
+   Duration = 1.5,
+   Image = "bell-ring",
+})
+end
+   end,
+})
+
+local TeamESPToggle = Tab:CreateToggle({
+   Name = "Team ESP",
+   CurrentValue = false,
+   Flag = "TeamESPToggle", 
+   Callback = function(Value)
+       teamESP = Value
+       if teamESP then
+           task.wait()
+           Sense.teamSettings.friendly.enabled = teamESP
+           Rayfield:Notify({
+   Title = "Peteware",
+   Content = "Team ESP Enabled. Highlights all teamates in a 600 studs radius.",
+   Duration = 2.5,
+   Image = "bell-ring",
+})
+else
+    task.wait()
+    Sense.teamSettings.friendly.enabled = teamESP
+    Rayfield:Notify({
+   Title = "Peteware",
+   Content = "Team ESP Disabled.",
+   Duration = 1.5,
+   Image = "bell-ring",
+})
+end
+   end,
+})
+
+local Tab = Window:CreateTab("Autofarm", "dollar-sign")
+
+local CasbAutofarmToggle = Tab:CreateToggle({
+   Name = "Cash Autofarm",
+   CurrentValue = false,
+   Flag = "CashAutofarmToggle", 
+   Callback = function(Value)
+       farmActive = Value
+       if farmActive then
+           SpawnLocation("RedRocks")
+           Rayfield:Notify({
+   Title = "Peteware",
+   Content = "Cash Autofarm Enabled.",
+   Duration = 2.5,
+   Image = "bell-ring",
+})
+else
+    SpawnLocation("RedRocks")
+    clonedStatus = false
+    Rayfield:Notify({
+   Title = "Peteware",
+   Content = "Cash Autofarm Disabled.",
+   Duration = 1.5,
+   Image = "bell-ring",
+})
+end
+   end,
+})
+
+local AutofarmStatistics = Tab:CreateParagraph({
+    Title = "Statistics",
+    Content = cashStats .. "\n" .. pingStats .. "\n" .. fpsStats .. "\n" .. timerStats
+})
+
+local Tab = Window:CreateTab("Teleports", "user")
+
+local Section = Tab:CreateSection("Cowboys")
+
+local TumbleweedTPButton = Tab:CreateButton({
+   Name = "Tumbleweed",
+   Callback = function()
+       Rayfield:Notify({
+   Title = "Peteware",
+   Content = "Spawning at Tumbleweed",
+   Duration = 2.5,
+   Image = "bell-ring",
+})
+       SpawnLocation("Tumbleweed")
+   end,
+})
+
+local GrayridgeTPButton = Tab:CreateButton({
+   Name = "Grayridge",
+   Callback = function()
+       Rayfield:Notify({
+   Title = "Peteware",
+   Content = "Spawning at Grayridge",
+   Duration = 2.5,
+   Image = "bell-ring",
+})
+       SpawnLocation("Grayridge")
+   end,
+})
+
+local StoneCreekTPButton = Tab:CreateButton({
+   Name = "Stone Creek",
+   Callback = function()
+       Rayfield:Notify({
+   Title = "Peteware",
+   Content = "Spawning at Stone Creek",
+   Duration = 2.5,
+   Image = "bell-ring",
+})
+       SpawnLocation("StoneCreek")
+   end,
+})
+
+local QuarryTPButton = Tab:CreateButton({
+   Name = "Rust Ridge Quarry",
+   Callback = function()
+       Rayfield:Notify({
+   Title = "Peteware",
+   Content = "Spawning at Rust Ridge Quarry",
+   Duration = 2.5,
+   Image = "bell-ring",
+})
+       SpawnLocation("Quarry")
+   end,
+})
+
+local Section = Tab:CreateSection("Outlaws")
+
+local FortCassidyTPButton = Tab:CreateButton({
+   Name = "Fort Cassidy",
+   Callback = function()
+       Rayfield:Notify({
+   Title = "Peteware",
+   Content = "Spawning at Fort Cassidy",
+   Duration = 2.5,
+   Image = "bell-ring",
+})
+       SpawnLocation("FortCassidy")
+   end,
+})
+
+local FortArthurTPButton = Tab:CreateButton({
+   Name = "Fort Arthur",
+   Callback = function()
+       Rayfield:Notify({
+   Title = "Peteware",
+   Content = "Spawning at Fort Arthur",
+   Duration = 2.5,
+   Image = "bell-ring",
+})
+       SpawnLocation("FortArthur")
+   end,
+})
+
+local RedRocksTPButton = Tab:CreateButton({
+   Name = "Red Rocks Camp",
+   Callback = function()
+       Rayfield:Notify({
+   Title = "Peteware",
+   Content = "Spawning at Red Rocks Camp",
+   Duration = 2.5,
+   Image = "bell-ring",
+})
+       SpawnLocation("RedRocks")
+   end,
+})
+
+local Tab = Window:CreateTab("Misc", "circle-ellipsis")
+
+local Section = Tab:CreateSection("In-Game")
+
+local AutoSprintToggle = Tab:CreateToggle({
+   Name = "Auto Sprint",
+   CurrentValue = false,
+   Flag = "AutoSprintToggle", 
+   Callback = function(Value)
+       autoSprint = Value
+       if autoSprint then
+           Rayfield:Notify({
+   Title = "Peteware",
+   Content = "Auto Sprint Enabled.",
+   Duration = 2.5,
+   Image = "bell-ring",
+})
+else
+    Rayfield:Notify({
+   Title = "Peteware",
+   Content = "Auto Sprint Disabled.",
+   Duration = 1.5,
+   Image = "bell-ring",
+})
+end
+   end,
+})
+
+local Section = Tab:CreateSection("Character")
+
+local jpUpdate = true
+local defaultJP = humanoid.JumpPower
+local customJP = false
+local currentJP = humanoid.JumpPower
+
+local jpSlider = Tab:CreateSlider({
+   Name = "JumpPower",
+   Range = {0, 1000},
+   Increment = 10,
+   Suffix = "JumpPower",
+   CurrentValue = defaultJP,
+   Flag = "JumpPowerSlider", 
+   Callback = function(Value)
+       if Value ~= defaultJP then
+            jpUpdate = false
+            customJP = true
+            if humanoid.JumpPower ~= Value then
+                humanoid.JumpPower = Value
+                currentJP = Value
+            end
+        end
+    end,
+})
+
+local ResetStatsButton = Tab:CreateButton({
+    Name = "Reset JumpPower",
+    Callback = function()
+        customJP = false
+        jpUpdate = true
+        currentJP = defaultJP
+
+        humanoid.JumpPower = defaultJP
+        jpSlider:Set(defaultJP)        
+    end,
+})
+
+local Divider = Tab:CreateDivider()
+
+local Section = Tab:CreateSection("Other Scripts")
+
+local FPSBoosterButton = Tab:CreateButton({
+    Name = "FPS Booster",
+    Callback = function()
+        -- Made by RIP#6666
+_G.Settings = {
+    Players = {
+        ["Ignore Me"] = true, -- Ignore your Character
+        ["Ignore Others"] = true -- Ignore other Characters
+    },
+    Meshes = {
+        Destroy = false, -- Destroy Meshes
+        LowDetail = true -- Low detail meshes (NOT SURE IT DOES ANYTHING)
+    },
+    Images = {
+        Invisible = true, -- Invisible Images
+        LowDetail = false, -- Low detail images (NOT SURE IT DOES ANYTHING)
+        Destroy = false, -- Destroy Images
+    },
+    ["No Particles"] = true, -- Disables all ParticleEmitter, Trail, Smoke, Fire and Sparkles
+    ["No Camera Effects"] = true, -- Disables all PostEffect's (Camera/Lighting Effects)
+    ["No Explosions"] = true, -- Makes Explosion's invisible
+    ["No Clothes"] = true, -- Removes Clothing from the game
+    ["Low Water Graphics"] = true, -- Removes Water Quality
+    ["No Shadows"] = true, -- Remove Shadows
+    ["Low Rendering"] = true, -- Lower Rendering
+    ["Low Quality Parts"] = true -- Lower quality parts
+}
+loadstring(game:HttpGet("https://raw.githubusercontent.com/CasperFlyModz/discord.gg-rips/main/FPSBooster.lua"))()
+    end,
+})
+
+local InfYieldAdminButton = Tab:CreateButton({
+   Name = "Infinite Yield Admin",
+   Callback = function()
+       loadstring(game:HttpGet('https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source'))()
+   end,
+})
+
+local PetewareToolboxButton = Tab:CreateButton({
+    Name = "Developers Toolbox",
+    Callback = function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/PetewareScripts/Developers-Toolbox-Peteware/refs/heads/main/main.lua",true))()
+    end,
+})
+
+local Tab = Window:CreateTab("Background Tasks", "clipboard-list")
+
+local Paragraph = Tab:CreateParagraph({Title = "Background Tasks", Content = [[
+    Anti-AFK]]})
+
+local Tab = Window:CreateTab("Settings", "settings")
+
+local RejoinButton = Tab:CreateButton({
+   Name = "Rejoin",
+   Callback = function()
+Rayfield:Notify({
+   Title = "Rejoining Server...",
+   Content = "Attemping to Rejoin Server.",
+   Duration = 3.5,
+   Image = "bell-ring",
+})
+task.wait(1)
+       rejoinServer()
+   end,
+})
+
+local ServerHopButton = Tab:CreateButton({
+   Name = "Server Hop",
+   Callback = function()
+Rayfield:Notify({
+   Title = "Server Hopping...",
+   Content = "Attemping to Server Hop.",
+   Duration = 3.5,
+   Image = "bell-ring",
+})
+task.wait(1)
+       serverHop()
+   end,
+})
+
+local KeepPetewareToggle = Tab:CreateToggle({
+    Name = "Keep Peteware On Server Hop/Rejoin",
+    CurrentValue = false,
+    Flag = "keepPetewareToggle",
+    Callback = function(Value)
+        if Value then
+            Rayfield:Notify({
+                Title = "Peteware on Rejoin / Server Hop On",
+                Content = "Whenever you rejoin or serverhop the script will automatically execute aswel.",
+                Duration = 3.5,
+                Image = "bell-ring",
+            })
+
+            keepPeteware = true
+            teleportCheck = false
+
+            player.OnTeleport:Connect(function(State)
+                if keepPeteware and not teleportCheck and queueteleport then
+                    teleportCheck = true
+                    queueteleport([[
+                    if not game:IsLoaded() then
+                        game.Loaded:Wait()
+                        task.wait(1)
+                    end
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/PetewareScripts/Peteware-V1/refs/heads/main/Loader",true))()
+]])
+                end
+            end)
+        elseif not Value then
+            Rayfield:Notify({
+                Title = "Peteware on Rejoin / Server Hop Off",
+                Content = "The script now wont automatically execute on serverhop or rejoin.",
+                Duration = 2,
+                Image = "bell-ring",
+            })
+
+            keepPeteware = false
+            teleportCheck = false
+        end
+    end,
+})
+
+KeepPetewareToggle:Set(true)
+
+local function StopRayfieldOptimisation()
+    Rayfield:Notify({
+   Title = "Stopped Rayfield Optimisation",
+   Content = "",
+   Duration = 2,
+   Image = "bell-ring",
+})  
+    RayfieldOptimisation = false
+end
+
+local RayfieldOptimisationToggle = Tab:CreateToggle({
+   Name = "Rayfield Optimisation (Recommended)",
+   CurrentValue = false,
+   Flag = "RayfieldOptimisationToggle",
+   Callback = function(Value)
+       if Value then
+Rayfield:Notify({
+   Title = "Started Rayfield Optimisation",
+   Content = "",
+   Duration = 2,
+   Image = "bell-ring",
+})         
+           RayfieldOptimisation = true
+elseif not Value then
+    if RayfieldOptimisation then
+        StopRayfieldOptimisation()
+    end
+    end
+   end,
+})
+
+local OpenConsoleButton = Tab:CreateButton({
+   Name = "Open Console",
+   Callback = function()
+       OpenDevConsole()
+   end,
+})
+
+local renderConnection
+
+local function RenderConnectionDisconnect()
+    if renderConnection and renderConnection.Connected then
+        renderConnection:Disconnect()
+    end
+end
+
+local function FarmEnd()
+    if farmActive then
+        SpawnLocation("RedRocks")
+        farmActive = false
+    end
+end
+
+local DestroyUIButton = Tab:CreateButton({
+    Name = "Destroy UI",
+    Callback = function()
+        if not confirmDestroy then
+            confirmDestroy = true
+            Rayfield:Notify({
+                Title = "Confirm UI Destruction",
+                Content = "Click 'Destroy UI' again to confirm.",
+                Duration = 3,
+                Image = "bell-ring",
+            })
+            task.delay(3.5, function()
+                confirmDestroy = false
+            end)
+        else
+             silentAim = false
+             autoSprint = false
+             keepPeteware = false
+             teleportCheck = false
+             FarmEnd()
+             task.wait()
+             _G.Execution = false
+             execution = false
+             RenderConnectionDisconnect()
+             Sense.Unload()
+            Rayfield:Destroy()
+        end
+    end,
+})
+
+--// Timestamp Handler
+local timers = {}
+
+local function ShouldRun(id, interval)
+    local timestamp = tick()
+    local oldTimestamp = timers[id]
+
+    if (not oldTimestamp) or ((timestamp - oldTimestamp) > interval) then
+        timers[id] = timestamp
+        return true
+    end
+    return false
+end
+
+--// Loops
+renderConnection = runService.RenderStepped:Connect(function(dt)
+    if ShouldRun("jpUpdate", 0.2) then
+        if jpUpdate and not customJP then
+            defaultJP = humanoid.JumpPower
+            jpSlider:Set(defaultJP)
+        end
+    end
+    if rayfieldOptimisation and ShouldRun("rayfieldOptimisation", 1) then
+        local OldRayfieldPath = coreGui:FindFirstChild("Rayfield-Old")
+        if OldRayfieldPath then
+            OldRayfieldPath:Destroy()
+        end
+    end
+    if autoSprint and ShouldRun("autoSprint", 0.1) then
+        local walkState = char.WalkState
+        if walkState.Value ~= "Sprinting" then
+            walkState.Value = "Sprinting"
+        end
+    end
     if farmActive then
         if not clonedStatus then 
             CloneHumanoid()
+            task.wait(1)
         end
         if not LootRegister() then
             LootSafe()
         end
     end
+    if ShouldRun("performanceStats", 1) then
+        if farmActive then
+            seconds += 1
+            if seconds >= 60 then seconds = 0 minutes += 1 end
+            if minutes >= 60 then minutes = 0 hours += 1 end
+            timerStats = string.format("Elapsed Time: %02d:%02d:%02d", hours, minutes, seconds)
+            local currentCash = player.leaderstats["$$"].Value
+            cashStats = "Earnings: $" .. Format(currentCash - startCash)
+        end
+        local ping = game:GetService("Stats"):FindFirstChild("PerformanceStats") and game.Stats.PerformanceStats:FindFirstChild("Ping")
+        pingStats = ping and ("Ping: " .. math.floor(ping:GetValue()) .. "ms") or "Ping: N/A"
+        fpsStats = "FPS: " .. math.floor(1 / dt)
+        AutofarmStatistics:Set({
+            Title = "Statistics",
+            Content = cashStats .. "\n" .. pingStats .. "\n" .. fpsStats .. "\n" .. timerStats
+        })
+    end
 end)
 
---// Autofarming Webhook  (next update maybe)
+--// Events
+player.CharacterAdded:Connect(function()
+    if not execution then
+        return
+    end
+    task.wait(1)
+    humanoid.JumpPower = currentJP
+end)
+game:GetService("FriendService").FriendsUpdated:Connect(function(friendData)
+    if not execution then
+        return
+    end
+    for _, v in pairs(players:GetPlayers()) do
+        if v ~= player then
+            local success, isFriend = pcall(function()
+                return player:IsFriendsWith(v.UserId)
+            end)
+            if success then
+                friendsList[v.UserId] = isFriend
+            end
+        end
+    end
+end)
+players.PlayerAdded:Connect(function(v)
+    if not execution then
+        return
+    end
+    task.delay(1, function()
+        local success, isFriend = pcall(function()
+            return player:IsFriendsWith(v.UserId)
+        end)
+        if success then
+            friendsList[v.UserId] = isFriend
+        end
+    end)
+end)
+players.PlayerRemoving:Connect(function(v)
+    if not execution then
+        return
+    end
+    friendsList[v.UserId] = nil
+end)
+humanoid.Died:Connect(function()
+    if not farmActive and not execution then
+        return
+    end
+    clonedStatus = false
+    task.wait(6)
+    SpawnLocation("RedRocks")
+    task.wait(2.5)
+    if not clonedStatus then
+        CloneHumanoid()
+    end
+end)
 
 --[[// Credits
-Infinite Yield: Anti-AFK
+Infinite Yield: Server Hop and Anti-AFK
 Infinite Yield Discord Server: https://discord.gg/78ZuWSq
+RIP#6666: FPS Booster
+RIP#6666 Discord Server: https://discord.gg/rips
 ]]
