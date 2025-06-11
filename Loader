@@ -21,6 +21,12 @@ Peteware Development Team
 --// Start Initialised Stopwatch
 local startTime = os.clock()
 
+--// Loading Handler
+if not game:IsLoaded() then
+    game.Loaded:Wait()
+    task.wait(1)
+end
+
 --// Execution Handler
 if _G.ExecutionLoader then return
     else
@@ -37,10 +43,6 @@ local initialisedFlag = false
 
 local function OpenDevConsole()
     game:GetService("StarterGui"):SetCore("DevConsoleVisible", true)
-end
-
-local function CloseDevConsole()
-    game:GetService("StarterGui"):SetCore("DevConsoleVisible", false)
 end
 
 --// Supported Checks
@@ -133,7 +135,6 @@ end)
 else
     warn("[Peteware-V1]: [3/3] Authentication Failed, You are Blacklisted from using this script.")
     task.wait(1)
-    CloseDevConsole()
     game:GetService("Players").LocalPlayer:Kick(kickContent)
 end    
 
