@@ -4,17 +4,11 @@ local tweenService = game:GetService("TweenService")
 local coreGui = game:GetService("CoreGui")
 local screenGui = coreGui:FindFirstChild("Peteware-V1")
 
+--// Ui Cleanup	
 local oldUI = coreGui:FindFirstChild("PetewareNotification")
 if oldUI then
     oldUI:Destroy()
 end
-
---//UI Checks
-    local supportedGames = {
-        12339127827,
-        2474168535,
-        85896571713843
-    }
 	
 --// Theme
 local theme = {
