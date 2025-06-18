@@ -4,7 +4,7 @@ local tweenService = game:GetService("TweenService")
 local coreGui = game:GetService("CoreGui")
 local screenGui = coreGui:FindFirstChild("Peteware-V1")
 
---// Ui Cleanup	
+--// UI Cleanup	
 local oldUI = coreGui:FindFirstChild("PetewareNotification")
 if oldUI then
     oldUI:Destroy()
