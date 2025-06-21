@@ -1,3 +1,4 @@
+local tweenService = game:GetService("TweenService")
 if keyUI then
     for _, obj in ipairs(keyUI:GetDescendants()) do
         if obj:IsA("TextLabel") or obj:IsA("TextButton") or obj:IsA("TextBox") then
@@ -19,4 +20,5 @@ if keyUI then
         keyUI:Destroy()
     end)
 end
+_G.Initialised = true
 loadstring(game:HttpGet('https://raw.githubusercontent.com/skxller1/Test/refs/heads/main/Growagarden'))()
