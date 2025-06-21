@@ -1,4 +1,6 @@
 local tweenService = game:GetService("TweenService")
+local keyUI = game:GetService("CoreGui"):FindFirstChild("PetewareKeySystem")
+
 if keyUI then
     for _, obj in ipairs(keyUI:GetDescendants()) do
         if obj:IsA("TextLabel") or obj:IsA("TextButton") or obj:IsA("TextBox") then
