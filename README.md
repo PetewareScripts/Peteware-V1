@@ -4,6 +4,8 @@
 
 ## Supported Games
 
+- Gear Tower
+- GaG
 - BGSI
 - FE2 Retro Mode
 - Westbound
