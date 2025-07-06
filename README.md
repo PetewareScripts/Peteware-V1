@@ -6,6 +6,7 @@
 
 - Gear Tower
 - GaG
+- Samsaken v2
 - BGSI
 - FE2 Retro Mode
 - Westbound
